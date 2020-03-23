@@ -14,9 +14,9 @@ def cleaner(drug_file, legacy_reac, current_reac):
 	drug_all = drug_pt_2.drop(columns=['reac_pt_list_x', 'reac_pt_list_y'])
 	drug_all_no_pt_na = drug_all.dropna(subset=['reac_pt_list'])
 	drug_all_no_pt_na['reac_pt_list'] = drug_all_no_pt_na['reac_pt_list'].apply(lambda x: x.split('|'))
-	drug_all_no_pt_na.to_csv('faers_data_with_codes', sep='\t', index=False)
+	# drug_all_no_pt_na.to_csv('faers_data_with_codes', sep='\t', index=False)
 
-	faers_pairwise = drug_all_no_pt_na[['lookup_value', 'reac_pt_list']].explode('reac_pt_list')
+	faers_pairwise = drug_all_no_pt_na.explode('reac_pt_list')
 	faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.lower()
 	faers_pairwise.to_csv('faers_pairwise.input', sep='\t', index=False)
 
