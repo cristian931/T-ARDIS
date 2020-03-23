@@ -1,0 +1,226 @@
+#!/bin/sh
+##########################################################################
+# create the combined legacy demographic files with the filename appended as the last column
+# NOTE the demographic file formats are in two versions
+# We will call the file format before 2005 Q3 version A and everything from 2005 Q3 onwards, version B
+#
+# LTS Computing LLC
+##########################################################################
+
+# load the demographic format A files:
+
+# process the first format A file - including adding "filename" column name to the header line at the start of the file
+f="DEMO04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the format A all data file
+sed 's/\r$//' $f | sed 'N;s/\n\$/\$/' | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_version_A_demo_legacy_data_with_filename.txt
+
+# process the other format A files and concatenate to the format A all data file
+FILES="
+DEMO04Q2.TXT DEMO04Q3.TXT DEMO04Q4.TXT
+DEMO05Q1.TXT DEMO05Q2.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r$//' $f | sed 'N;s/\n\$/\$/' | sed '1,1d' | sed "1,$ s/$/$f/" >> all_version_A_demo_legacy_data_with_filename.txt
+done
+
+# load the demographic format B files:
+
+# process the first format B file - including adding "filename" column name to the header line at the start of the file
+f="DEMO05Q3.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the format B all data file
+sed 's/\r$//' $f | sed 'N;s/\n\$/\$/' | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_version_B_demo_legacy_data_with_filename.txt
+
+# process the other format B files and concatenate to the format B all data file
+FILES="
+DEMO05Q4.TXT
+DEMO06Q1.TXT  DEMO06Q2.TXT  DEMO06Q3.TXT  DEMO06Q4.TXT
+DEMO07Q1.TXT  DEMO07Q2.TXT  DEMO07Q3.TXT  DEMO07Q4.TXT
+DEMO08Q1.TXT  DEMO08Q2.TXT  DEMO08Q3.TXT  DEMO08Q4.TXT
+DEMO09Q1.TXT  DEMO09Q2.TXT  DEMO09Q3.TXT  DEMO09Q4.TXT
+DEMO10Q1.TXT  DEMO10Q2.TXT  DEMO10Q3.TXT  DEMO10Q4.TXT
+DEMO11Q1.TXT  DEMO11Q2.TXT  DEMO11Q3.TXT  DEMO11Q4.TXT
+DEMO12Q1.TXT  DEMO12Q2.TXT  DEMO12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return, fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r$//' $f | sed 'N;s/\n\$/\$/' | sed '1,1d' | sed "1,$ s/$/$f/" >> all_version_B_demo_legacy_data_with_filename.txt
+done
+
+# fix problem data record - remove embedded $ field separator in string
+sed -i 's/8129732$8401177$I$$8129732-9$20120126$20120206$20120210$EXP$JP-CUBIST-$E2B0000000182$CUBIST PHARMACEUTICALS, INC.$85$YR$M$Y$$$20120210$$$$$JAPAN$DEMO12Q1.TXT/8129732$8401177$I$$8129732-9$20120126$20120206$20120210$EXP$JP-CUBIST-E2B0000000182$CUBIST PHARMACEUTICALS, INC.$85$YR$M$Y$$$20120210$PH$$$$JAPAN$DEMO12Q1.TXT/' all_version_B_demo_legacy_data_with_filename.txt
+#!/bin/sh
+##########################################################################
+# create the combined legacy drug files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="DRUG04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+requirednumberoffields="13"
+# remove control-H (ascii 08) and windows line feed chars, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/[\x08\r]//g' $f | awk -F '$' -v numfields=$requirednumberoffields '(NR == 1) {print;next} (NF >= numfields) {print;next} (NF <numfields) {printf("%s",$0)}' | awk -F '$' -v numfields=$requirednumberoffields '(NF <= numfields) {print;next} (NF > numfields) {for (i=1; i<numfields; i++) printf("%s$",$i); printf("\n"); for (i=numfields; i<=NF; i++) {if (i<NF) {printf("%s$",$i) } else {printf("%s",$i)}}{if (i<NF) {printf("%s$",$i) } else {printf("%s",$i)}}; printf("\n")}' | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" >all_drug_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+#cat /dev/null > all_drug_legacy_data_with_filename3.txt
+FILES="
+DRUG04Q2.TXT  DRUG04Q3.TXT  DRUG04Q4.TXT  DRUG05Q1.TXT  DRUG05Q2.TXT  DRUG05Q3.TXT  DRUG05Q4.TXT  DRUG06Q1.TXT  DRUG06Q2.TXT  DRUG06Q3.TXT  DRUG06Q4.TXT  DRUG07Q1.TXT  DRUG07Q2.TXT
+DRUG07Q3.TXT  DRUG07Q4.TXT  DRUG08Q1.TXT  DRUG08Q2.TXT  DRUG08Q3.TXT  DRUG08Q4.TXT  DRUG09Q1.TXT  DRUG09Q2.TXT  DRUG09Q3.TXT  DRUG09Q4.TXT  DRUG10Q1.TXT  DRUG10Q2.TXT  DRUG10Q3.TXT  DRUG10Q4.TXT
+DRUG11Q1.TXT  DRUG11Q2.TXT  DRUG11Q3.TXT  DRUG11Q4.TXT  DRUG12Q1.TXT  DRUG12Q2.TXT  DRUG12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove control-H (ascii 08) and windows line feed chars, fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/[\x08\r]//g' $f | sed '1,1d' | awk -F '$' -v numfields=$requirednumberoffields '(NR == 1) {print;next} (NF >= numfields) {print;next} (NF <numfields) {printf("%s",$0)}' | awk -F '$' -v numfields=$requirednumberoffields '(NF <= numfields) {print;next} (NF > numfields) {for (i=1; i<numfields; i++) printf("%s$",$i); printf("\n"); for (i=numfields; i<=NF; i++) {if (i<NF) {printf("%s$",$i) } else {printf("%s",$i)}}; printf("\n")}' | sed "1,$ s/$/$f/" >> all_drug_legacy_data_with_filename.txt
+done
+
+# fix 4 remaining problem data records
+sed -i -e 's/6750381$1013798159$SS$MORPHINE SULFATE$1$ORAL$30 MG, TID, ORAL$D$D$$$$6750381$1013798165$C$KADIAN$1$$$$$$$$DRUG10Q2.TXT/6750381$1013798159$SS$MORPHINE SULFATE$1$ORAL$30 MG, TID, ORAL$D$D$$$$DRUG10Q2.TXT\n6750381$1013798165$C$KADIAN$1$$$$$$$$DRUG10Q2.TXT/' -e 's/7475791$1016572490$SS$DOXORUBICIN (DOXORUBICIN) (INJECTION)$2$INTRAVENOUS$25 MG\/M2 MILLIGRAM(S)\/SQ. METER, DAY 1 AND 15, EVERY 28 DAYS, INTRAVENOUS (NOT OTHERWISE SPECIFIED)$$$$$$7475791$1016572486$SS$PROCARBAZINE HYDROCHLORIDE$1$ORAL$40 MG\/M2 MILLIGRAMS(S)\/SQ. METER, DAY 1-14, ORAL$$$$$$DRUG11Q2.TXT/7475791$1016572490$SS$DOXORUBICIN (DOXORUBICIN) (INJECTION)$2$INTRAVENOUS$25 MG\/M2 MILLIGRAM(S)\/SQ. METER, DAY 1 AND 15, EVERY 28 DAYS, INTRAVENOUS (NOT OTHERWISE SPECIFIED)$$$$$$DRUG11Q2.TXT\n7475791$1016572486$SS$PROCARBAZINE HYDROCHLORIDE$1$ORAL$40 MG\/M2 MILLIGRAMS(S)\/SQ. METER, DAY 1-14, ORAL$$$$$$DRUG11Q2.TXT/' -e 's/7652730$1017255397$SS$BEVACIZUMAB (RHUMAB VEGF)$2$$920 MG$$$$$$7652731$1017185840$PS$DYSPORT$1$INTRAMUSCULAR$150 UNITS (150 UNITS, SINGLE CYCLE), INTRAMUSCULAR$N$D$825C$$$DRUG11Q3.TXT/7652730$1017255397$SS$BEVACIZUMAB (RHUMAB VEGF)$2$$920 MG$$$$$$DRUG11Q3.TXT\n7652731$1017185840$PS$DYSPORT$1$INTRAMUSCULAR$150 UNITS (150 UNITS, SINGLE CYCLE), INTRAMUSCULAR$N$D$825C$$$DRUG11Q3.TXT/' -e 's/7941354$1018188213$SS$MEMANTINE HYDROCHLORIDE$1$ORAL$15 MG (15 MG, 1 IN 1 D),ORAL$D$D$$$$7941355$1018142414$SS$DROSPIRENONE AND ETHINYL ESTRADIOL$1$$UNK$$$93657A$$021098$DRUG11Q4.TXT/7941354$1018188213$SS$MEMANTINE HYDROCHLORIDE$1$ORAL$15 MG (15 MG, 1 IN 1 D),ORAL$D$D$$$$DRUG11Q4.TXT\n7941355$1018142414$SS$DROSPIRENONE AND ETHINYL ESTRADIOL$1$$UNK$$$93657A$$021098$DRUG11Q4.TXT/' all_drug_legacy_data_with_filename.txt
+
+#!/bin/sh
+##########################################################################
+# create the combined legacy indication files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="INDI04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/\r//g' $f | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/\$$f/" > all_indi_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+FILES="
+INDI04Q2.TXT  INDI04Q3.TXT  INDI04Q4.TXT  INDI05Q1.TXT  INDI05Q2.TXT  INDI05Q3.TXT  INDI05Q4.TXT  INDI06Q1.TXT  INDI06Q2.TXT  INDI06Q3.TXT  INDI06Q4.TXT  INDI07Q1.TXT  INDI07Q2.TXT
+INDI07Q3.TXT  INDI07Q4.TXT  INDI08Q1.TXT  INDI08Q2.TXT  INDI08Q3.TXT  INDI08Q4.TXT  INDI09Q1.TXT  INDI09Q2.TXT  INDI09Q3.TXT  INDI09Q4.TXT  INDI10Q1.TXT  INDI10Q2.TXT  INDI10Q3.TXT  INDI10Q4.TXT
+INDI11Q1.TXT  INDI11Q2.TXT  INDI11Q3.TXT  INDI11Q4.TXT  INDI12Q1.TXT  INDI12Q2.TXT  INDI12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r//g' $f | sed '1,1d' | sed "1,$ s/$/\$$f/" >> all_indi_legacy_data_with_filename.txt
+done
+
+#!/bin/sh
+##########################################################################
+# create the combined legacy outcome files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="OUTC04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/\r//g' $f | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_outc_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+FILES="
+OUTC04Q2.TXT  OUTC04Q3.TXT  OUTC04Q4.TXT  OUTC05Q1.TXT  OUTC05Q2.TXT  OUTC05Q3.TXT  OUTC05Q4.TXT  OUTC06Q1.TXT  OUTC06Q2.TXT  OUTC06Q3.TXT  OUTC06Q4.TXT  OUTC07Q1.TXT  OUTC07Q2.TXT
+OUTC07Q3.TXT  OUTC07Q4.TXT  OUTC08Q1.TXT  OUTC08Q2.TXT  OUTC08Q3.TXT  OUTC08Q4.TXT  OUTC09Q1.TXT  OUTC09Q2.TXT  OUTC09Q3.TXT  OUTC09Q4.TXT  OUTC10Q1.TXT  OUTC10Q2.TXT  OUTC10Q3.TXT  OUTC10Q4.TXT
+OUTC11Q1.TXT  OUTC11Q2.TXT  OUTC11Q3.TXT  OUTC11Q4.TXT  OUTC12Q1.TXT  OUTC12Q2.TXT  OUTC12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r//g' $f | sed '1,1d' | awk '/\$$/ {print;next;} {printf("%s",$0);}' | sed "1,$ s/$/$f/" >> all_outc_legacy_data_with_filename.txt
+done
+
+#!/bin/sh
+##########################################################################
+# create the combined legacy reaction files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="REAC04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/\r//g' $f | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_reac_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+FILES="
+REAC04Q2.TXT  REAC04Q3.TXT  REAC04Q4.TXT  REAC05Q1.TXT  REAC05Q2.TXT  REAC05Q3.TXT  REAC05Q4.TXT  REAC06Q1.TXT  REAC06Q2.TXT  REAC06Q3.TXT  REAC06Q4.TXT  REAC07Q1.TXT  REAC07Q2.TXT
+REAC07Q3.TXT  REAC07Q4.TXT  REAC08Q1.TXT  REAC08Q2.TXT  REAC08Q3.TXT  REAC08Q4.TXT  REAC09Q1.TXT  REAC09Q2.TXT  REAC09Q3.TXT  REAC09Q4.TXT  REAC10Q1.TXT  REAC10Q2.TXT  REAC10Q3.TXT  REAC10Q4.TXT
+REAC11Q1.TXT  REAC11Q2.TXT  REAC11Q3.TXT  REAC11Q4.TXT  REAC12Q1.TXT  REAC12Q2.TXT  REAC12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r//g' $f | sed '1,1d' | sed "1,$ s/$/$f/" >> all_reac_legacy_data_with_filename.txt
+done
+
+#!/bin/sh
+##########################################################################
+# create the combined legacy reporting source files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="RPSR04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/\r//g' $f | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_rpsr_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+FILES="
+RPSR04Q2.TXT  RPSR04Q3.TXT  RPSR04Q4.TXT  RPSR05Q1.TXT  RPSR05Q2.TXT  RPSR05Q3.TXT  RPSR05Q4.TXT  RPSR06Q1.TXT  RPSR06Q2.TXT  RPSR06Q3.TXT  RPSR06Q4.TXT  RPSR07Q1.TXT  RPSR07Q2.TXT
+RPSR07Q3.TXT  RPSR07Q4.TXT  RPSR08Q1.TXT  RPSR08Q2.TXT  RPSR08Q3.TXT  RPSR08Q4.TXT  RPSR09Q1.TXT  RPSR09Q2.TXT  RPSR09Q3.TXT  RPSR09Q4.TXT  RPSR10Q1.TXT  RPSR10Q2.TXT  RPSR10Q3.TXT  RPSR10Q4.TXT
+RPSR11Q1.TXT  RPSR11Q2.TXT  RPSR11Q3.TXT  RPSR11Q4.TXT  RPSR12Q1.TXT  RPSR12Q2.TXT  RPSR12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r//g' $f | sed '1,1d' | sed "1,$ s/$/$f/" >> all_rpsr_legacy_data_with_filename.txt
+done
+
+#!/bin/sh
+##########################################################################
+# create the combined legacy therapy files with the filename appended as the last column
+#
+# LTS Computing LLC
+##########################################################################
+
+# process the first file - including adding "filename" column name to the header line at the start of the file
+f="THER04Q1.TXT"
+thefilenamenosuffix=$(basename $f .TXT)
+# remove windows carriage return, fix bad data records with embedded \n, add on the "filename" column name to the header line and add the filename as the last column on each line
+# output to the all data file
+sed 's/\r//g' $f | sed '1,1 s/$/\$FILENAME/' | sed "2,$ s/$/$f/" > all_ther_legacy_data_with_filename.txt
+
+# process the other files and concatenate to the all data file
+FILES="
+THER04Q2.TXT  THER04Q3.TXT  THER04Q4.TXT  THER05Q1.TXT  THER05Q2.TXT  THER05Q3.TXT  THER05Q4.TXT  THER06Q1.TXT  THER06Q2.TXT  THER06Q3.TXT  THER06Q4.TXT  THER07Q1.TXT  THER07Q2.TXT
+THER07Q3.TXT  THER07Q4.TXT  THER08Q1.TXT  THER08Q2.TXT  THER08Q3.TXT  THER08Q4.TXT  THER09Q1.TXT  THER09Q2.TXT  THER09Q3.TXT  THER09Q4.TXT  THER10Q1.TXT  THER10Q2.TXT  THER10Q3.TXT  THER10Q4.TXT
+THER11Q1.TXT  THER11Q2.TXT  THER11Q3.TXT  THER11Q4.TXT  THER12Q1.TXT  THER12Q2.TXT  THER12Q3.TXT
+"
+for f in $FILES
+do
+        thefilenamenosuffix=$(basename $f .TXT)
+        # remove windows carriage return,fix bad data records with embedded \n, remove the header line and add the filename as the last column on each line
+        sed 's/\r//g' $f | sed '1,1d' | sed "1,$ s/$/$f/" >> all_ther_legacy_data_with_filename.txt
+done
+
