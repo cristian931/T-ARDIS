@@ -7,7 +7,7 @@ In order to make it works a couple of pre-processing steps are necessary.
   - To download that you need to be registered in the ATHENA website http://athena.ohdsi.org and have a license for the access the MEDDRA dictionary, the latter can be requested registering in the UMLS website.
   - Once the registering procedures are completed, to download the dictionaries  just go again to the ATHENA website at http://athena.ohdsi.org/vocabulary/list, add to the already selected databases the MEDDRA and click on "download vocabulaires".
   - Save and extract the files in a folder called "athena" in the same parent folder in which are saved all the other repository files.
-3) Launch the run.sh file
+3) Launch the run_file.sh script
   - The script will start downlaoding the updated files of the different DRUG - SIDE EFFECT databases:
   
       - FAERS (https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-latest-quarterly-data-files)
@@ -39,4 +39,4 @@ Different files of output are obtained from the procedure:
 1) Set up the postgresql server
 2) clone or download all the file in the repository and save it to a folder
 3) Download the Athena dictionaries and save them into a folder called "athena" inside the repository folder
-4) run the run.sh script (you need to have the permission to create/remove folder)
+4) run the run_file.sh script (you need to have the permission to create/remove folder)
