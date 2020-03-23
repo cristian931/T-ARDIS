@@ -10,7 +10,7 @@ from multipy.fdr import qvalue
 
 # Load the drug-se databases previusly cleaned
 
-faers = pd.read_csv('relationship_analysis_input_files/faers_pairwise.input', sep='\t', names=['drug', 'se'], dtype=object)
+faers = pd.read_csv('relationship_analysis_input_files/faers_pairwise.input', sep='\t', dtype=object, usecols=['lookup_value', 'reac_pt_list'])
 faers = faers.rename(columns={'lookup_value' : 'drug', 'reac_pt_list':'se'}).sort_values('drug')
 
 medeffect = pd.read_csv('relationship_analysis_input_files/MEDEFFECT_DRUG_SE.input', sep='\t', dtype=object, usecols=['DRUGNAME','PT_NAME_ENG'])
