@@ -31,9 +31,8 @@ In order to confirm the relationship the results have been statistically validat
 
 # Output
 Different files of output are obtained from the procedure:
-  - The databases cleaned versions, in the folder relationship_analysis_input_files
-  - A separated cleaned version of the FAERS database, containing also the report codes informations
-  - The pairwise relationship file containing the computed p-value and q-avalue correction called "qvalues_all_interactions"
+  - The databases cleaned versions, in the folder relationship_analysis_input_files. The latter are tsv files containing the access code of the different entries (if available) and the information of the drugs and the associated side effects 
+  - The pairwise relationship file containing the computed p-value and q-avalue correction of the association target - side effect, called "qvalues_all_interactions"
 
 # Usage
 1) Set up the postgresql server
