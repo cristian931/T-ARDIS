@@ -33,9 +33,10 @@ def cleaner(drug_file, legacy_reac, current_reac):
     # create the pairwise relationship between drugs and associate side effects, capitalize the side effects names
     faers_pairwise = drug_all_no_pt_na[['FAERS_ID', 'lookup_value', 'reac_pt_list']].explode('reac_pt_list')
     faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.capitalize()
+    faers_final = faers_pairwise.drop_duplicates()
 
     # Save the data to file
-    faers_pairwise.to_csv('faers_pairwise.input', sep='\t', index=False)
+    faers_final.to_csv('faers_pairwise.input', sep='\t', index=False)
 
 
 if __name__ == "__main__":
