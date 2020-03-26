@@ -19,7 +19,7 @@ def cleaner(drug_file, legacy_reac, current_reac):
 	drug_all_no_pt_na['FAERS_ID'] = drug_all_no_pt_na['primaryid'].fillna('isr')
 
 	faers_pairwise = drug_all_no_pt_na[['FAERS_ID','lookup_value', 'reac_pt_list']].explode('reac_pt_list')
-	faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.lower()
+	faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.capitalize()
 	faers_pairwise.to_csv('faers_pairwise.input', sep='\t', index=False)
 
 if __name__ == "__main__":
