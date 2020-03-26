@@ -4,18 +4,22 @@
 
 #####################################################
 #
-# This Script is used to Automatize the FAERS cleaning procedure (That rely on a Postgresql and different vocabularies), the download and cleaning procedure of three different drug-se databases (MEDEFFECT
-# OFFSIDE and SIDER (using a python script), and other three different DRUG - TARGET databases (DRUGBANK, DRUGCENTRAL, MATADOR) cleaned with a python script too.
+# This Script is used to Automatize the FAERS cleaning procedure (That rely on a Postgresql and different vocabularies), 
+# the download and cleaning procedure of three different drug-se databases (MEDEFFECT
+# OFFSIDE and SIDER (using a python script), and other three different DRUG - TARGET databases (DRUGBANK, DRUGCENTRAL, MATADOR)
+# cleaned with a python script too.
 # The script manages the downloading and unpacking of file, the folder creation and file / database management.
 #
 # The script is divided in sections based on the work done
-# The entire procedure will require at least two days and AT LEAST 45 GB OF FREE MEMORY, since the files are huge and unfurtunately need to be processed at the same time
+# The entire procedure will require at least two days and AT LEAST 45 GB OF FREE MEMORY, 
+# since the files are huge and unfurtunately need to be processed at the same time
 #
 # USAGE bash download_data.sh
 #
 #####################################################
 
-# First thing: Set up and install a postgresql database on the local machine or server, optional download and activate the pgadmin utility to explore with a graphic interface the server.
+# First thing: Set up and install a postgresql database on the local machine or server, 
+# optional download and activate the pgadmin utility to explore with a graphic interface the server.
 # The procedure won't require it since each database command is run by script or line.
 #
 # service httpd start
