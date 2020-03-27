@@ -1,0 +1,7 @@
+beautifulsoup4==4.8.2
+pandas==1.0.1
+requests==2.23.0
+scipy==1.4.1
+multipy==0.16
+pandarallel==1.4.6
+numpy==1.18.1
