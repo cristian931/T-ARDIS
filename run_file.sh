@@ -6,8 +6,8 @@
 #
 # This Script is used to Automatize the FAERS cleaning procedure (That rely on a Postgresql and different vocabularies), 
 # the download and cleaning procedure of three different drug-se databases (MEDEFFECT
-# OFFSIDE and SIDER (using a python script), and other three different DRUG - TARGET databases (DRUGBANK, DRUGCENTRAL, MATADOR)
-# cleaned with a python script too.
+# OFFSIDE and SIDER (using a python script), and other three different DRUG - TARGET databases
+# (DRUGBANK, DRUGCENTRAL, MATADOR) cleaned with a python script too.
 # The script manages the downloading and unpacking of file, the folder creation and file / database management.
 #
 # The script is divided in sections based on the work done
@@ -28,15 +28,38 @@
 #
 #
 
+# create a python virtual environment
+
+mkdir python_env
+
+python3.7 -m venv ./python_env --clear
+
+source python_env/bin/activate
+
+python3.7 -m pip install -r requirements.txt
+
 #create a database called faers_polishing_procedure
 
 echo
 echo Setting up Database
 echo
-psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'faers_polishing_procedure';" # if already exist the database disconnect everyone from it
-psql -U postgres -c "drop database if exists faers_polishing_procedure;"  > /dev/null 2>&1 # drop the entire database for a clean start
-createdb -U postgres -h localhost faers_polishing_procedure > /dev/null 2>&1 # create the database
-psql -U postgres -d faers_polishing_procedure -c "CREATE SCHEMA faers"  > /dev/null 2>&1 # create the faers schema
+
+# if already exist the database disconnect everyone from it
+psql -U postgres \
+     -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'faers_polishing_procedure';"
+
+# drop the entire database for a clean start
+psql -U postgres \
+     -c "drop database if exists faers_polishing_procedure;"  > /dev/null 2>&1
+
+createdb -U postgres \
+         -h localhost faers_polishing_procedure \
+         > /dev/null 2>&1 # create the database
+
+psql -U postgres \
+     -d faers_polishing_procedure \
+     -c "CREATE SCHEMA faers"  \
+     > /dev/null 2>&1 # create the faers schema
 
 
 # FAERS and LAERS download and preparation
@@ -44,7 +67,8 @@ psql -U postgres -d faers_polishing_procedure -c "CREATE SCHEMA faers"  > /dev/n
 echo
 echo FAERS and LAERS download and preparation
 echo
-python3.7 all_scripts/get_urls.py | grep ascii > urls  # use a python script to get the links for downloading the FAERS data
+# use a python script to get the links for downloading the FAERS data
+python3.7 all_scripts/get_urls.py | grep ascii > urls
 
 mkdir faers_files
 cd faers_files
@@ -72,7 +96,11 @@ done
 
 mv DEMO18Q1_new.txt ./DEMO18Q1.txt 2> /dev/null
 
-for i in $( ls ); do mv -i $i `echo $i | tr 'a-z' 'A-Z'`; done 2> /dev/null # convert all file names in uppercase (even extension)
+# convert all file names in uppercase (even extension)
+for i in $( ls )
+do
+    mv -i $i `echo $i | tr 'a-z' 'A-Z'`
+done 2> /dev/null
 
 
 # launch the github preprocessing on the files
@@ -96,22 +124,27 @@ filetype="DEMO  DRUG  INDI  OUTC  REAC  RPSR  THER" # define the different files
 for type in ${filetype}
 do
 	ls | grep ${type} > tmp # grep the file of interest
-	
-	type_lower=`echo ${type} | tr '[:upper:]' '[:lower:]'`  # transform the type to lowercase to match the name of the new files
+
+	# transform the type to lowercase to match the name of the new files
+	type_lower=`echo ${type} | tr '[:upper:]' '[:lower:]'`
 	
 	for file in `cat tmp` # check the file if are later than 2018q4
 	do
 		value=`echo ${file} | sed "s/${type}//g" | sed 's/Q//g' | sed 's/.TXT//g'`
 		if [[ ${value#0} -gt 184 ]] # 184 is the suffix of file from year 18q4 without the q, 
-					    # so if the suffix on the file is bigger than 184 it means that the file is later 2018 and have to be processed and appended. 
+					    # so if the suffix on the file is bigger than 184 it means that the file is later
+					    # 2018 and have to be processed and appended.
 					    # The #0 means that the variable value has to be interpreted as decimal
     			then
-    			sed 's/\r$//' "${file}"| sed '1,1d' | sed "1,$ s/$/\$${file}/" >> all_${type_lower}_data_with_filename.TXT
+    			sed 's/\r$//' "${file}"| sed '1,1d' | sed "1,$ s/$/\$${file}/" \
+    			>> all_${type_lower}_data_with_filename.TXT
 		fi
 	done
 done
 
-cat all_demo_data_with_filename.TXT >> all_version_B_demo_data_with_filename.TXT  # append to the correct file the new data and erase the secondary file
+
+# append to the correct file the new data and erase the secondary file
+cat all_demo_data_with_filename.TXT >> all_version_B_demo_data_with_filename.TXT
 rm all_demo_data_with_filename.TXT
 
 cat all_drug_data_with_filename.TXT >> all_version_B_drug_data_with_filename.TXT
@@ -135,7 +168,11 @@ cd orange_book
 wget https://www.fda.gov/media/76860/download > /dev/null 2>&1
 mv download ./orange_book.zip
 unzip orange_book.zip > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f ../all_scripts/load_nda_table.sql > /dev/null 2>&1
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f ../all_scripts/load_nda_table.sql \
+     > /dev/null 2>&1
 cd ..
 
 
@@ -143,14 +180,22 @@ cd ..
 echo
 echo Loading ISO Codes
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/load_country_code_table.sql > /dev/null 2>&1
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/load_country_code_table.sql \
+     > /dev/null 2>&1
 
 
 #load the european active drug references
 echo
 echo Loading EU references
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/load_eu_drug_name_active_ingredient_table.sql > /dev/null 2>&1
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/load_eu_drug_name_active_ingredient_table.sql \
+     > /dev/null 2>&1
 
 
 #Update Athena vocabularies
@@ -166,54 +211,129 @@ cd ..
 echo
 echo Loading Athena files in Database
 echo
-psql -U postgres -d faers_polishing_procedure -c "CREATE SCHEMA cdmv5" > /dev/null
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/data_table_creation_athena_step_1.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/data_table_creation_athena_step_2.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/data_table_creation_athena_step_3.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/data_table_creation_athena_step_4.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/data_table_creation_athena_step_5.sql > /dev/null 2>&1
+
+psql -U postgres \
+     -d faers_polishing_procedure \
+     -c "CREATE SCHEMA cdmv5" \
+     > /dev/null
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/data_table_creation_athena_step_1.sql \
+      > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/data_table_creation_athena_step_2.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/data_table_creation_athena_step_3.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/data_table_creation_athena_step_4.sql \
+     > /dev/null 2>&1
+
+psql -h localhost  \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/data_table_creation_athena_step_5.sql \
+     > /dev/null 2>&1
 
 
 # Create the meddra / snomed mapping
 echo
 echo Creating Meddra-Snowmed reference Map
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/create_meddra_snomed_mapping_table.sql > /dev/null 2>&1
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/create_meddra_snomed_mapping_table.sql \
+     > /dev/null 2>&1
 
 
 # LOAD THE FAERS FILE INTO THE DATABASE
 echo
 echo Loading Faers file into Database
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/load_legacy_faers.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/load_current_faers.sql > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/load_legacy_faers.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/load_current_faers.sql \
+     > /dev/null 2>&1
 
 
 # De-duplicate cases
 echo
 echo De-duplicating cases
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/derive_unique_all_case.sql > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/derive_unique_all_case.sql \
+     > /dev/null 2>&1
 
 
 # Map Drugs from Rx-norm and other databases (without USAGI)
 echo
 echo Mapping drug with Rx-norm db \(without Usagi procedure\)
 echo
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/map_all_drugname_to_rxnorm_without_usagi.sql > /dev/null 2>&1
+
+psql -h localhost -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/map_all_drugname_to_rxnorm_without_usagi.sql \
+     > /dev/null 2>&1
 
 
 #Download cleaned tables and create final table with python
 mkdir FAERS_almost_clean
-psql -h localhost -U postgres -d faers_polishing_procedure -f all_scripts/standardize_combined_drug_mapping.sql > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -c "\copy faers.standard_case_drug TO 'FAERS_almost_clean/cleaned_faers_drugs.csv' DELIMITER ',' CSV HEADER;" > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -c "\copy faers.reac_pt_legacy_list TO 'FAERS_almost_clean/legacy_side_effects.csv' DELIMITER ',' CSV HEADER;" > /dev/null 2>&1
-psql -h localhost -U postgres -d faers_polishing_procedure -c "\copy faers.reac_pt_list TO 'FAERS_almost_clean/current_side_effects.csv' DELIMITER ',' CSV HEADER;" > /dev/null 2>&1
+
+psql -h localhost -U postgres \
+     -d faers_polishing_procedure \
+     -f all_scripts/standardize_combined_drug_mapping.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -c "\copy faers.standard_case_drug TO 'FAERS_almost_clean/cleaned_faers_drugs.csv' DELIMITER ',' CSV HEADER;" \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -c "\copy faers.reac_pt_legacy_list TO 'FAERS_almost_clean/legacy_side_effects.csv' DELIMITER ',' CSV HEADER;" \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d faers_polishing_procedure \
+     -c "\copy faers.reac_pt_list TO 'FAERS_almost_clean/current_side_effects.csv' DELIMITER ',' CSV HEADER;" \
+     > /dev/null 2>&1
 
 echo
 echo Faers final cleaning
 echo
-python3.7 all_scripts/faers_final_polishing.py FAERS_almost_clean/cleaned_faers_drugs.csv FAERS_almost_clean/legacy_side_effects.csv FAERS_almost_clean/current_side_effects.csv > /dev/null 2>&1
+
+python3.7 all_scripts/faers_final_polishing.py \
+          FAERS_almost_clean/cleaned_faers_drugs.csv \
+          FAERS_almost_clean/legacy_side_effects.csv \
+          FAERS_almost_clean/current_side_effects.csv > /dev/null 2>&1
 
 # This concludes the FAERS clenaing procedure
 
@@ -233,7 +353,11 @@ echo
 
 mkdir MEDEFFECT
 cd MEDEFFECT
-wget https://www.canada.ca/content/dam/hc-sc/migration/hc-sc/dhp-mps/alt_formats/zip/medeff/databasdon/extract_extrait.zip > /dev/null 2>&1
+
+wget \
+https://www.canada.ca/content/dam/hc-sc/migration/hc-sc/dhp-mps/alt_formats/zip/medeff/databasdon/extract_extrait.zip \
+> /dev/null 2>&1
+
 unzip extract_extrait.zip > /dev/null 2>&1
 rm *zip
 mv cvponline*/* .
@@ -301,8 +425,17 @@ echo
 mkdir DRUGBANK
 cd DRUGBANK
 #For accessing some files in DRUGBANK is needed a subscription
-curl -Lfv -o all.zip -u cristiano.galletti@uvic.cat:mr.killjoy93 https://www.drugbank.ca/releases/5-1-5/downloads/target-all-polypeptide-ids > /dev/null 2>&1
-curl -Lfv -o drugbank_vocabulary.zip https://www.drugbank.ca/releases/5-1-5/downloads/all-drugbank-vocabulary > /dev/null 2>&1
+curl -Lfv \
+     -o all.zip \
+     -u cristiano.galletti@uvic.cat:mr.killjoy93 \
+     https://www.drugbank.ca/releases/5-1-5/downloads/target-all-polypeptide-ids \
+     > /dev/null 2>&1
+
+curl -Lfv \
+     -o drugbank_vocabulary.zip \
+     https://www.drugbank.ca/releases/5-1-5/downloads/all-drugbank-vocabulary \
+     > /dev/null 2>&1
+
 unzip all.zip > /dev/null
 rm pharmacologically_active.csv
 unzip drugbank_vocabulary.zip > /dev/null 2>&1
@@ -332,7 +465,8 @@ python3.7 all_scripts/Target_database_cleaning.py > /dev/null 2>&1
 
 
 # Merging, cleaning, relate the different databases.
-# The output file will be a tab delimited file containing the relationship between target and side effect with the respective p-values and q-values
+# The output file will be a tab delimited file containing the relationship between target and side effect with
+# the respective p-values and q-values
 # A supplementary file with only the interactions <= 0.05 will be created as well.
 
 
