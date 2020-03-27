@@ -6,18 +6,22 @@ relationship between the drug and the targets as Uniprot ids """
 
 
 import pandas as pd
-import numpy as np
 
 
 # DRUGBANK: From Drugbank two different file have been downloaded, the drugbank vocabulary, containing the drugs
 # names and their respective codes and the Target file, containg the information of the drugs' targets and the
 # relationship with the former
 
-drug_drugbank_file = pd.read_csv('DRUGBANK/drugbank vocabulary.csv', dtype=object)
+drug_drugbank_file = pd.read_csv('DRUGBANK/drugbank vocabulary.csv',
+                                 dtype=object
+                                 )
+
 drug_drugbank = drug_drugbank_file[['DrugBank ID', 'Common name']].rename(columns={'DrugBank ID': 'Drug IDs'})
 
 
-target_drugbank_file = pd.read_csv('DRUGBANK/all.csv', dtype=object)
+target_drugbank_file = pd.read_csv('DRUGBANK/all.csv',
+                                   dtype=object
+                                   )
 
 target_drugbank = target_drugbank_file[['UniProt ID', 'Drug IDs']]
 
@@ -25,12 +29,19 @@ target_drugbank['Drug IDs'] = target_drugbank['Drug IDs'].apply(lambda x: x.spli
 
 target_exploded = target_drugbank.explode('Drug IDs')
 
-drugbank_merged = pd.merge(drug_drugbank, target_exploded, how='left', on='Drug IDs').dropna()
+drugbank_merged = pd.merge(drug_drugbank,
+                           target_exploded,
+                           how='left',
+                           on='Drug IDs'
+                           ).dropna()
 
 drugbank_merged['Common name'] = drugbank_merged['Common name'].str.upper()
 
 drugbank_final = drugbank_merged.drop_duplicates()
-drugbank_final.to_csv('Drugbank_relationship.input', sep='\t', index=False)
+
+drugbank_final.to_csv('Drugbank_relationship.input',
+                      sep='\t',
+                      index=False)
 
 ########################################################################################################################
 
@@ -54,7 +65,7 @@ uniprot = pd.read_csv('human_proteome_gene_names_11_03.tab',
                       names=['Uniprot ID', 'Primary Gene', 'Synonym'],
                       header=0).fillna('')
 
-uniprot['Gene names'] = uniprot[['Primary Gene','Synonym']].agg(' '.join, axis=1)
+uniprot['Gene names'] = uniprot[['Primary Gene', 'Synonym']].agg(' '.join, axis=1)
 uniprot['Gene names'] = uniprot['Gene names'].apply(lambda x: x.strip().split())
 
 uniprot_exploded = uniprot[['Uniprot ID', 'Gene names']].explode('Gene names')
