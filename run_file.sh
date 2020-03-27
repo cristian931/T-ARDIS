@@ -29,6 +29,8 @@
 #
 
 # create a python virtual environment
+echo
+echo setting up Python Virtual Enviroment and installing required packages
 
 mkdir python_env
 
@@ -36,7 +38,7 @@ python3.7 -m venv ./python_env --clear
 
 source python_env/bin/activate
 
-python3.7 -m pip install -r requirements.txt
+python3.7 -m pip install -r requirements.txt > /dev/null 2>&1
 
 #create a database called faers_polishing_procedure
 
