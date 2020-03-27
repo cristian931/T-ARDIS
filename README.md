@@ -39,3 +39,6 @@ Different files of output are obtained from the procedure:
 2) clone or download all the file in the repository and save it to a folder
 3) Download the Athena dictionaries and save them into a folder called "athena" inside the repository folder
 4) run the run_file.sh script (you need to have the permission to create/remove folder)
+
+# Remark
+The Faers cleaning procedure has been based on the repository at https://github.com/ltscomputingllc/faersdbstats, the files has been updated to accept new FAERS data but the logic behind remains unchanged
