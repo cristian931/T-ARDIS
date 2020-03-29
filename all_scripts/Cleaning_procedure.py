@@ -57,6 +57,7 @@ medeffect_related = pd.merge(medeffect_drugs[['REPORT_ID', 'DRUGNAME']],
                              on='REPORT_ID').dropna()
 
 medeffect_related['DRUGNAME'] = medeffect_related['DRUGNAME'].str.upper()
+medeffect_related['PT_NAME_ENG'] = medeffect_related['PT_NAME_ENG'].str.capitalize()
 
 medeffect_related = medeffect_related.rename(columns={'REPORT_ID': 'MEDEFFECT_REPORT_ID'}).drop_duplicates()
 
@@ -87,6 +88,7 @@ sider_related = pd.merge(sider_drug,
                          )
 
 sider_related['DRUGNAME'] = sider_related['DRUGNAME'].str.upper()
+sider_related['SIDEEFFECT'] = sider_related['SIDEEFFECT'].str.capitalize()
 
 sider_related = sider_related.rename(columns={'STICH_ID_1': 'SIDER_ID'}).drop_duplicates()
 
@@ -98,6 +100,7 @@ sider_related.to_csv('SIDER_DRUG_SE.input', sep='\t', index=False)
 offside_db = pd.read_csv('OFFSIDE/OFFSIDES.csv', dtype=object)
 
 offside_db['drug_concept_name'] = offside_db['drug_concept_name'].str.upper()
+offside_db['condition_concept_name'] = offside_db['condition_concept_name'].str.capitalize()
 
 offside_clean = offside_db[['drug_rxnorn_id', 'drug_concept_name', 'condition_concept_name']].drop_duplicates()
 
