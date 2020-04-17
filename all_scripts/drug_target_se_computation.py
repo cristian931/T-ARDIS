@@ -229,7 +229,7 @@ def fisher(x, interaction_len=interaction_len):
 
 # Select the pair column only in order to simplyfy the computation
 
-lighter = se_tg_pairwise_part_3[['se', 'target']] # extract only the se and the target
+lighter = se_tg_pairwise_part_3[['se', 'target']]  # extract only the se and the target
 
 lighter['pvalue'] = values.parallel_apply(fisher, axis=1)
 
@@ -247,14 +247,15 @@ _, qvals = qvalue(lighter['pvalue'].tolist())
 
 lighter['qvals'] = qvals
 
+Final = lighter.drop_duplicates()
 
-lighter.to_csv('qvalues_all_interactions',
+Final.to_csv('qvalues_all_interactions',
                sep='\t',
                index=False
                )
 
 
-accepted = lighter.loc[lighter['qvals'] <= 0.05]
+accepted = Final.loc[Final['qvals'] <= 0.05]
 accepted.to_csv('accepted_interactions',
                 sep='\t',
                 index=False
