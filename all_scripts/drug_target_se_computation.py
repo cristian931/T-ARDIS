@@ -14,11 +14,12 @@ pandarallel.initialize()
 
 # Load the drug-se databases previusly cleaned
 
-faers = pd.read_csv('relationship_analysis_input_files/faers_pairwise.input',
+faers = pd.read_csv('relationship_analysis_input_files/FAERS_DRUG_SE.input',
                     sep='\t',
                     dtype=object,
                     usecols=['lookup_value',
-                             'reac_pt_list'
+                             'reac_pt_list',
+                             'Database'
                              ]
                     )
 faers = faers.rename(columns={'lookup_value': 'drug',
@@ -31,7 +32,8 @@ medeffect = pd.read_csv('relationship_analysis_input_files/MEDEFFECT_DRUG_SE.inp
                         sep='\t',
                         dtype=object,
                         usecols=['DRUGNAME',
-                                 'PT_NAME_ENG'
+                                 'PT_NAME_ENG',
+                                 'Database'
                                  ]
                         )
 medeffect= medeffect.rename(columns={'DRUGNAME': 'drug',
@@ -44,7 +46,8 @@ offside = pd.read_csv('relationship_analysis_input_files/OFFSIDE_DRUG_SE.input',
                       sep='\t',
                       dtype=object,
                       usecols=['drug_concept_name',
-                               'condition_concept_name'
+                               'condition_concept_name',
+                               'Database'
                                ]
                       )
 offside = offside.rename(columns={'drug_concept_name': 'drug',
@@ -57,7 +60,8 @@ sider = pd.read_csv('relationship_analysis_input_files/SIDER_DRUG_SE.input',
                     sep='\t',
                     dtype=object,
                     usecols=['DRUGNAME',
-                             'SIDEEFFECT'
+                             'SIDEEFFECT',
+                             'Database'
                              ]
                     )
 sider = sider.rename(columns={'DRUGNAME': 'drug',
@@ -77,10 +81,11 @@ total = total.groupby('drug').agg(lambda x: list(set(x.tolist()))).reset_index()
 
 # Now we load the datasets regarding drug target relationships
 
-drugbank = pd.read_csv('relationship_analysis_input_files/Drugbank_relationship.input',
+drugbank = pd.read_csv('relationship_analysis_input_files/DRUGBANK_DRUG_TG.input',
                        sep='\t',
                        usecols=['Common name',
-                                'UniProt ID'
+                                'UniProt ID',
+                                'Database'
                                 ]
                        )
 
@@ -89,10 +94,11 @@ drugbank = drugbank.rename(columns={'Common name': 'drug',
                                     }
                            )
 
-dgidb = pd.read_csv('relationship_analysis_input_files/DGidb_relationships.input',
+dgidb = pd.read_csv('relationship_analysis_input_files/DGIDB_DRUG_TG.input',
                     sep='\t',
                     usecols=['drug_claim_primary_name',
-                             'Uniprot ID'
+                             'Uniprot ID',
+                             'Database'
                              ]
                     )
 
@@ -101,10 +107,11 @@ dgidb = dgidb.rename(columns={'drug_claim_primary_name': 'drug',
                              }
                     )
 
-drugcentral = pd.read_csv('relationship_analysis_input_files/drugcentral_merged.input',
+drugcentral = pd.read_csv('relationship_analysis_input_files/DRUGCENTRAL_DRUG_TG.input',
                           sep='\t',
                           usecols=['DRUG_NAME',
-                                   'ACCESSION'
+                                   'ACCESSION',
+                                   'Database'
                                    ]
                           )
 
@@ -192,7 +199,7 @@ values['overlap_len'] = lists.parallel_apply(overlap, axis=1)
 
 # Now define a function for the p-value computation using the fisher exact test.
 
-interaction_len = len(interaction)
+interaction_len = len(interaction)  # extract the total number of drugs (len of the interaction dataframe)
 
 
 def fisher(x, interaction_len=interaction_len):
@@ -260,3 +267,9 @@ accepted.to_csv('accepted_interactions',
                 sep='\t',
                 index=False
                 )
+
+exploded_interaction = interaction.explode('se').explode('target')
+
+drug_tg_se_stats = pd.merge(accepted, exploded_interaction, on=['se', 'target'], how='inner')
+
+drug_tg_se_stats.to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE', sep='\t', index=False)
