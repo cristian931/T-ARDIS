@@ -35,8 +35,10 @@ def cleaner(drug_file, legacy_reac, current_reac):
     faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.capitalize()
     faers_final = faers_pairwise.drop_duplicates()
 
+    faers_final['Database'] = 'FAERS'
+
     # Save the data to file
-    faers_final.to_csv('faers_pairwise.input', sep='\t', index=False)
+    faers_final.to_csv('FAERS_DRUG_SE.input', sep='\t', index=False)
 
 
 if __name__ == "__main__":
