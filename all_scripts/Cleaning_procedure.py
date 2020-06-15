@@ -61,6 +61,8 @@ medeffect_related['PT_NAME_ENG'] = medeffect_related['PT_NAME_ENG'].str.capitali
 
 medeffect_related = medeffect_related.rename(columns={'REPORT_ID': 'MEDEFFECT_REPORT_ID'}).drop_duplicates()
 
+medeffect_related['Database'] = 'MEDEFFECT'
+
 medeffect_related.to_csv('MEDEFFECT_DRUG_SE.input', sep='\t', index=False)
 
 # SIDER: The file are separated in two file, drug_namse.tsv and meddra_all_se.tsv. Using the unique ID we're able to
@@ -92,6 +94,8 @@ sider_related['SIDEEFFECT'] = sider_related['SIDEEFFECT'].str.capitalize()
 
 sider_related = sider_related.rename(columns={'STICH_ID_1': 'SIDER_ID'}).drop_duplicates()
 
+sider_related['Database'] = 'SIDER'
+
 sider_related.to_csv('SIDER_DRUG_SE.input', sep='\t', index=False)
 
 
@@ -103,5 +107,7 @@ offside_db['drug_concept_name'] = offside_db['drug_concept_name'].str.upper()
 offside_db['condition_concept_name'] = offside_db['condition_concept_name'].str.capitalize()
 
 offside_clean = offside_db[['drug_rxnorn_id', 'drug_concept_name', 'condition_concept_name']].drop_duplicates()
+
+offside_clean['Database'] = 'OFFSIDE'
 
 offside_clean.to_csv('OFFSIDE_DRUG_SE.input', sep='\t', index=False)

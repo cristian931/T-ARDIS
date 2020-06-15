@@ -39,7 +39,9 @@ drugbank_merged['Common name'] = drugbank_merged['Common name'].str.upper()
 
 drugbank_final = drugbank_merged.drop_duplicates()
 
-drugbank_final.to_csv('Drugbank_relationship.input',
+drugbank_final['Database'] = 'DRUGBANK'
+
+drugbank_final.to_csv('DRUGBANK_DRUG_TG.input',
                       sep='\t',
                       index=False)
 
@@ -81,7 +83,9 @@ dgidb_merged = pd.merge(dgidb_interactions,
 
 dgidb_final = dgidb_merged.drop_duplicates()
 
-dgidb_final.to_csv('DGidb_relationships.input', sep='\t', index=False)
+dgidb_final['Database'] = 'DGIDB'
+
+dgidb_final.to_csv('DGIDB_DRUG_TG.input', sep='\t', index=False)
 
 ########################################################################################################################
 
@@ -99,5 +103,7 @@ drugcentral['GENE'] = drugcentral['GENE'].apply(lambda x: x.split('|'))
 
 drugcentral_final = drugcentral.explode('ACCESSION')
 
-drugbank_final.to_csv('drugcentral_merged.input', sep='\t', index=False)
+drugcentral_final['Database'] = 'DRUGCENTRAL'
+
+drugbank_final.to_csv('DRUGCENTRAL_DRUG_TG.input', sep='\t', index=False)
 
