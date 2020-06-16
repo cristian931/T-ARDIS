@@ -9,8 +9,8 @@ import pandas as pd
 import scipy.stats as stats
 from multipy.fdr import qvalue
 from pandarallel import pandarallel
-pandarallel.initialize()
 
+pandarallel.initialize()
 
 # Load the drug-se databases previusly cleaned
 
@@ -23,10 +23,10 @@ faers = pd.read_csv('relationship_analysis_input_files/FAERS_DRUG_SE.input',
                              ]
                     )
 faers = faers.rename(columns={'lookup_value': 'drug',
-                              'reac_pt_list': 'se'
+                              'reac_pt_list': 'se',
+                              'Database': 'Database_FAERS'
                               }
                      ).sort_values('drug')
-
 
 medeffect = pd.read_csv('relationship_analysis_input_files/MEDEFFECT_DRUG_SE.input',
                         sep='\t',
@@ -36,11 +36,11 @@ medeffect = pd.read_csv('relationship_analysis_input_files/MEDEFFECT_DRUG_SE.inp
                                  'Database'
                                  ]
                         )
-medeffect= medeffect.rename(columns={'DRUGNAME': 'drug',
-                                     'PT_NAME_ENG': 'se'
-                                     }
-                            ).sort_values('drug')
-
+medeffect = medeffect.rename(columns={'DRUGNAME': 'drug',
+                                      'PT_NAME_ENG': 'se',
+                                      'Database': 'Database_MEDEFFECT'
+                                      }
+                             ).sort_values('drug')
 
 offside = pd.read_csv('relationship_analysis_input_files/OFFSIDE_DRUG_SE.input',
                       sep='\t',
@@ -51,10 +51,10 @@ offside = pd.read_csv('relationship_analysis_input_files/OFFSIDE_DRUG_SE.input',
                                ]
                       )
 offside = offside.rename(columns={'drug_concept_name': 'drug',
-                                  'condition_concept_name': 'se'
+                                  'condition_concept_name': 'se',
+                                  'Database': 'Database_OFFSIDE'
                                   }
                          ).sort_values('drug')
-
 
 sider = pd.read_csv('relationship_analysis_input_files/SIDER_DRUG_SE.input',
                     sep='\t',
@@ -65,18 +65,20 @@ sider = pd.read_csv('relationship_analysis_input_files/SIDER_DRUG_SE.input',
                              ]
                     )
 sider = sider.rename(columns={'DRUGNAME': 'drug',
-                              'SIDEEFFECT': 'se'}
+                              'SIDEEFFECT': 'se',
+                              'Database': 'Database_SIDER'
+                              }
                      ).sort_values('drug')
 
-
-total = faers.append([offside,
+df_se = faers.append([offside,
                       sider,
                       medeffect
                       ],
                      ignore_index=True
-                     )
-
-total = total.groupby('drug').agg(lambda x: list(set(x.tolist()))).reset_index()
+                     )[['drug', 'se']]\
+    .groupby('drug')\
+    .agg(lambda x: list(set(x.tolist())))\
+    .reset_index()
 
 
 # Now we load the datasets regarding drug target relationships
@@ -90,7 +92,8 @@ drugbank = pd.read_csv('relationship_analysis_input_files/DRUGBANK_DRUG_TG.input
                        )
 
 drugbank = drugbank.rename(columns={'Common name': 'drug',
-                                    'UniProt ID':'target'
+                                    'UniProt ID': 'target',
+                                    'Database': 'Database_DRUGBANK'
                                     }
                            )
 
@@ -103,9 +106,10 @@ dgidb = pd.read_csv('relationship_analysis_input_files/DGIDB_DRUG_TG.input',
                     )
 
 dgidb = dgidb.rename(columns={'drug_claim_primary_name': 'drug',
-                             'Uniprot ID':'target'
-                             }
-                    )
+                              'Uniprot ID': 'target',
+                              'Database': 'Database_DGIDB'
+                              }
+                     )
 
 drugcentral = pd.read_csv('relationship_analysis_input_files/DRUGCENTRAL_DRUG_TG.input',
                           sep='\t',
@@ -116,40 +120,40 @@ drugcentral = pd.read_csv('relationship_analysis_input_files/DRUGCENTRAL_DRUG_TG
                           )
 
 drugcentral = drugcentral.rename(columns={'DRUG_NAME': 'drug',
-                                          'ACCESSION': 'target'
+                                          'ACCESSION': 'target',
+                                          'Database': 'Database_DRUGCENTRAL'
                                           }
                                  )
 
 df_target = drugbank.append([dgidb,
                              drugcentral
-                             ], ignore_index=True)
-
-df_target_collapsed = df_target.groupby('drug').agg(lambda x: list(set(x.tolist()))).reset_index()
-
+                             ], ignore_index=True
+                            )[['drug', 'target']]\
+    .groupby('drug')\
+    .agg(lambda x: list(set(x.tolist())))\
+    .reset_index()
 
 # merge the drug - se database and the drug - target database mapping using the drug name, of course use an inner
 # join to exclude the unmapped matches
 
-interaction = pd.merge(total,
-                       df_target_collapsed,
+interaction = pd.merge(df_se,
+                       df_target,
                        how='inner',
                        on='drug')
-
 
 # Extrapolate the number of drugs that present a particular side effect reconstructing the pairwise relationship
 # between the mapped drugs and sideffect and grouping by the latter. In this way we can compute the number of drugs
 # simply applying the len function.
 
-dr_se_pairwise = interaction[['drug', 'se']].explode('se').groupby('se')\
-                 .agg(lambda x: list(set(x.tolist()))).reset_index()
+dr_se_pairwise = interaction[['drug', 'se']].explode('se').groupby('se') \
+    .agg(lambda x: list(set(x.tolist()))).reset_index()
 
 dr_se_pairwise['se_drug_len'] = dr_se_pairwise['drug'].apply(lambda x: len(x))
 
-
 # Same thing can be done for defining the number of drugs that present a particular target.
 
-dr_tg_pairwise = interaction[['drug', 'target']].explode('target').groupby('target')\
-                 .agg(lambda x: list(set(x.tolist()))).reset_index()
+dr_tg_pairwise = interaction[['drug', 'target']].explode('target').groupby('target') \
+    .agg(lambda x: list(set(x.tolist()))).reset_index()
 
 dr_tg_pairwise['tg_drug_len'] = dr_tg_pairwise['drug'].apply(lambda x: len(x))
 
@@ -240,27 +244,23 @@ lighter = se_tg_pairwise_part_3[['se', 'target']]  # extract only the se and the
 
 lighter['pvalue'] = values.parallel_apply(fisher, axis=1)
 
-
 lighter.to_csv('p_value_computed.csv',
                sep='\t',
                index=False
                )
 
-
 # obtain the q value correction on the p-value computed
 
 _, qvals = qvalue(lighter['pvalue'].tolist())
-
 
 lighter['qvals'] = qvals
 
 Final = lighter.drop_duplicates()
 
 Final.to_csv('qvalues_all_interactions',
-               sep='\t',
-               index=False
-               )
-
+             sep='\t',
+             index=False
+             )
 
 accepted = Final.loc[Final['qvals'] <= 0.05]
 accepted.to_csv('accepted_interactions',
@@ -268,8 +268,38 @@ accepted.to_csv('accepted_interactions',
                 index=False
                 )
 
+# Creation of an unique table with all the information (drug, tg, se, pval, qval, drug-se origin db, drug-tg origin db)
+
 exploded_interaction = interaction.explode('se').explode('target')
 
-drug_tg_se_stats = pd.merge(accepted, exploded_interaction, on=['se', 'target'], how='inner')
+drug_tg_se_stats = pd.merge(accepted,
+                            exploded_interaction,
+                            on=[
+                                'se',
+                                'target'
+                            ],
+                            how='inner'
+                            )
 
-drug_tg_se_stats.to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE', sep='\t', index=False)
+for se_dataframe in [faers, sider, offside, medeffect]:
+    drug_tg_se_stats = drug_tg_se_stats.merge(
+        se_dataframe.drop_duplicates(),
+        on=[
+            'drug',
+            'se'
+        ],
+        how='left'
+    )
+
+for tg_dataframe in [drugbank, drugcentral, dgidb]:
+    drug_tg_se_stats = drug_tg_se_stats.merge(
+        tg_dataframe.drop_duplicates(),
+        on=[
+            'drug',
+            'target'
+        ],
+        how='left'
+    )
+
+
+drug_tg_se_stats.sort_values('drug').to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE', sep='\t', index=False)
