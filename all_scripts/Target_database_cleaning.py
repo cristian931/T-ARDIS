@@ -18,6 +18,8 @@ drug_drugbank_file = pd.read_csv('DRUGBANK/drugbank vocabulary.csv',
 
 drug_drugbank = drug_drugbank_file[['DrugBank ID', 'Common name']].rename(columns={'DrugBank ID': 'Drug IDs'})
 
+drug_drugbank['Drug IDs'] = drug_drugbank['Drug IDs'].str.strip()  # remove possible whitespaces from ID
+
 
 target_drugbank_file = pd.read_csv('DRUGBANK/all.csv',
                                    dtype=object
@@ -28,6 +30,8 @@ target_drugbank = target_drugbank_file[['UniProt ID', 'Drug IDs']]
 target_drugbank['Drug IDs'] = target_drugbank['Drug IDs'].apply(lambda x: x.split(';'))
 
 target_exploded = target_drugbank.explode('Drug IDs')
+
+target_exploded['Drug IDs'] = target_exploded['Drug IDs'].str.strip()
 
 drugbank_merged = pd.merge(drug_drugbank,
                            target_exploded,
