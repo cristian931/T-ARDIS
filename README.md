@@ -29,6 +29,18 @@ In order to make it works a couple of pre-processing steps are necessary.
 4) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise relationships between the Drug's targets and side effects expliting the drug name as bridge.
 In order to confirm the relationship the results have been statistically validated using the Fisher exact test as explained in the paper of Kuhn et al. (http://europepmc.org/article/MED/23632385)
 
+-- At the end of the procedure, following the example of [https://pubmed.ncbi.nlm.nih.gov/32565027/], specific target-ADR pairs have been filtered out whenever the ADR term fall in any of this particular SOC classes, which are not specific to body parts or underlying human biology, as pointed on the definitions of MedDRA’s guidelines
+(https://admin.new.meddra.org/sites/default/files/guidance/file/intguide_%2023_1_English.pdf)
+  - General disorders and administration site conditions
+  - Injury, poisoning and procedural complications
+  - Investigations
+  - Neoplasms benign, malignant and unspecified [incl cysts and polyps]
+  - Product issues
+  - Social circumstances
+  - Surgical and medical procedures
+The Side effect contained in this classes are stored in the file ADR_to_remove.txt together with the SOC of appartenance and the respective MedDRA ID 
+
+
 # Output
 Different files of output are obtained from the procedure:
   - The databases cleaned versions, in the folder relationship_analysis_input_files. The latter are tsv files containing the access code of the different entries (if available) and the information of the drugs and the associated side effects 
