@@ -75,11 +75,21 @@ df_se = faers.append([offside,
                       medeffect
                       ],
                      ignore_index=True
-                     )[['drug', 'se']]\
+                     )[['drug', 'se']]
+
+# LOAD MEDDRA ADRs TO REMOVE
+df_adr_to_remove = pd.read_csv('ADR_to_remove.txt',
+                               sep='\t',
+                               dtype=object)
+
+list_adr_to_remove = df_adr_to_remove['PT'].tolist()
+
+df_se = df_se[~df_se.se.isin(list_adr_to_remove)]
+
+df_se = df_se\
     .groupby('drug')\
     .agg(lambda x: list(set(x.tolist())))\
     .reset_index()
-
 
 # Now we load the datasets regarding drug target relationships
 
