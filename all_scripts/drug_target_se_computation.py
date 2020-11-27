@@ -77,12 +77,8 @@ df_se = faers.append([offside,
                      ignore_index=True
                      )[['drug', 'se']]
 
-print(df_se)
-
 # LOAD MEDDRA  DB TO COVERT POSSIBLE LLT TO PT
 meddra_db = pd.read_csv('MeDDRA_complete_LLT', sep=';').drop(columns="Primary SOC").drop_duplicates()
-
-print(meddra_db)
 
 # Create a dictionary with LLT as keys and PT as values
 meddra_dic = dict(zip(meddra_db['English'], meddra_db['PT']))
@@ -103,8 +99,6 @@ list_adr_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].
 
 # Exclude ADR being part of particular SOC 
 df_se = df_se[~df_se.se.isin(list_adr_to_remove)]
-
-print(df_se)
 
 # Group dataframe by drug and store the related ADRs in lists
 df_se = df_se\
