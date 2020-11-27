@@ -78,8 +78,9 @@ df_se = faers.append([offside,
                      )[['drug', 'se']]
 
 # LOAD MEDDRA ADRs TO REMOVE
-df_adr_to_remove = pd.read_csv('ADR_to_remove.txt',
+df_adr_to_remove = pd.read_csv('ADR_to_remove.csv',
                                sep='\t',
+                               names=['PT', 'SOC'],
                                dtype=object)
 
 list_adr_to_remove = df_adr_to_remove['PT'].tolist()
@@ -248,7 +249,7 @@ def fisher(x, interaction_len=interaction_len):
     return pvalue
 
 
-# Select the pair column only in order to simplyfy the computation
+# Select the pair column only in order to simplify the computation
 
 lighter = se_tg_pairwise_part_3[['se', 'target']]  # extract only the se and the target
 
