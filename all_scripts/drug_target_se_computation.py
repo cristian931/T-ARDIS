@@ -77,16 +77,36 @@ df_se = faers.append([offside,
                      ignore_index=True
                      )[['drug', 'se']]
 
-# LOAD MEDDRA ADRs TO REMOVE
-df_adr_to_remove = pd.read_csv('ADR_to_remove.csv',
-                               sep=';',
-                               names=['PT', 'SOC'],
-                               dtype=object)
+print(df_se)
 
-list_adr_to_remove = df_adr_to_remove['PT'].drop_duplicates().tolist()
+# LOAD MEDDRA  DB TO COVERT POSSIBLE LLT TO PT
+meddra_db = pd.read_csv('MeDDRA_complete_LLT', sep=';').drop(columns="Primary SOC").drop_duplicates()
 
+print(meddra_db)
+
+# Create a dictionary with LLT as keys and PT as values
+meddra_dic = dict(zip(meddra_db['English'], meddra_db['PT']))
+
+# Map possible LLT in DRUG/ADRs dataframe to PT
+df_se['se'] = df_se['se'].map(meddra_dic).fillna(df_se['se'])
+
+# Exclude DRUG/ADRs pair if ADRs fall in this particular SOCs
+Excluding_SOC_list = ['General disorders and administration site conditions',
+                      'Injury, poisoning and procedural complications',
+                      'Investigations',
+                      'Neoplasms benign, malignant and unspecified (incl cysts and polyps)',
+                      'Product issues',
+                      'Social circumstances',
+                      'Surgical and medical procedures']
+
+list_adr_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].to_list()
+
+# Exclude ADR being part of particular SOC 
 df_se = df_se[~df_se.se.isin(list_adr_to_remove)]
 
+print(df_se)
+
+# Group dataframe by drug and store the related ADRs in lists
 df_se = df_se\
     .groupby('drug')\
     .agg(lambda x: list(set(x.tolist())))\
