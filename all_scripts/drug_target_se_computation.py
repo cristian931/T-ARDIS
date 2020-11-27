@@ -83,7 +83,7 @@ df_adr_to_remove = pd.read_csv('ADR_to_remove.csv',
                                names=['PT', 'SOC'],
                                dtype=object)
 
-list_adr_to_remove = df_adr_to_remove['PT'].tolist()
+list_adr_to_remove = df_adr_to_remove['PT'].drop_duplicates().tolist()
 
 df_se = df_se[~df_se.se.isin(list_adr_to_remove)]
 
