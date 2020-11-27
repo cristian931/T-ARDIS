@@ -79,7 +79,7 @@ df_se = faers.append([offside,
 
 # LOAD MEDDRA ADRs TO REMOVE
 df_adr_to_remove = pd.read_csv('ADR_to_remove.csv',
-                               sep='\t',
+                               sep=';',
                                names=['PT', 'SOC'],
                                dtype=object)
 
