@@ -77,8 +77,6 @@ df_se = faers.append([offside,
                      ignore_index=True
                      )[['drug', 'se']]
 
-df_se.to_csv('input', sep='\t', index=False)
-
 # LOAD MEDDRA  DB TO COVERT POSSIBLE LLT TO PT
 meddra_db = pd.read_csv('MeDDRA_complete_LLT', sep=';').drop(columns="Primary SOC").drop_duplicates()
 
