@@ -1,5 +1,5 @@
 # Target - Adverse Reaction Database Integrated Search
-This repository contain all the file necessary to download, compute and statistically validate the pairwise interaction 
+This repository contains all the file necessary to download, compute and statistically validate the pairwise interaction 
 between Drug side effects and Drug Targets
 
 In order to make it works a couple of pre-processing steps are necessary.
@@ -12,10 +12,10 @@ In order to make it works a couple of pre-processing steps are necessary.
     access the MEDDRA dictionary, the latter can be requested registering in the UMLS website.
   - Once the registering procedures are completed, to download the dictionaries  just go again to the ATHENA website 
     at http://athena.ohdsi.org/vocabulary/list, add to the already selected databases the MEDDRA and click on "download 
-    vocabulaires".
+    vocabularies".
   - Save and extract the files in a folder called "athena" in the same parent folder in which are saved all the other 
     repository files.
-  - **IMPORTANT: Update the run_file.sh with your ULMS credential (line 208) and DRUGBANK credential (line 478) in order
+  - **IMPORTANT: Update the run_file.sh with your UMLS credential (line 208) and DRUGBANK credential (line 478) in order
     to download and update the data.**  
 3) Launch the run_file.sh script
   - The script will start downloading the updated files of the different DRUG - SIDE EFFECT databases:
@@ -37,7 +37,7 @@ In order to make it works a couple of pre-processing steps are necessary.
       - DGidb (http://www.dgidb.org/)
 
 4) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise 
-   relationships between the Drug's targets and side effects expliting the drug name as bridge.
+   relationships between the Drug's targets and side effects exploiting the drug name as bridge.
 In order to confirm the relationship the results have been statistically validated using the Fisher exact test as 
    explained in the paper of Kuhn et al. (http://europepmc.org/article/MED/23632385)
 
@@ -53,8 +53,8 @@ body parts or underlying human biology, as pointed on the definitions of MedDRAâ
   - Social circumstances
   - Surgical and medical procedures
   
-The Side effect contained in this classes are stored in the file ADR_to_remove.txt together with the SOC of 
-appartenance and the respective MedDRA ID 
+The Side effect contained in these classes are stored in the file ADR_to_remove.txt together with the SOC of 
+membership and the respective MedDRA ID 
 
 
 # Output
@@ -62,7 +62,7 @@ Different files of output are obtained from the procedure:
   - The databases cleaned versions, in the folder relationship_analysis_input_files. The latter are tsv files containing
     the access code of the different entries (if available) and the information of the drugs and the associated side 
     effects 
-  - The pairwise relationship file containing the computed p-value and q-avalue correction of the association target - 
+  - The pairwise relationship file containing the computed p-value and q-value correction of the association target - 
     side effect, called "qvalues_all_interactions"
 
 # Usage
