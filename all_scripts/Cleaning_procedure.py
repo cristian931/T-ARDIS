@@ -44,22 +44,31 @@ header_reaction = ['REACTION_ID',
                    'MEDDRA_VERSION'
                    ]
 
+header_cleaned_drugs = ['DRUG_PRODUCT_ID',
+                        'STANDARD_CONCEPT_ID',
+                        'DRUGNAME_CLEANED']
+
 medeffect_drugs = pd.read_csv('MEDEFFECT/report_drug.txt', sep='$', names=header_drug, dtype=object)
-medeffect_drugs['DRUGNAME'] = medeffect_drugs['DRUGNAME'].str.replace('[^a-zA-Z0-9 \.]', '')
 
 side_effect_medeffect = pd.read_csv('MEDEFFECT/reactions.txt', sep='$', names=header_reaction, dtype=object)
 
-# now we relate the drugname and the se usign the id as intermediate
+drugs_cleaned = pd.read_csv('MEDEFFECT/MEDEFFECT_DRUG_CLEANED.csv', sep=',', names=header_cleaned_drugs, dtype=object)
+# now we relate the drugname and the se using the id as intermediate
 
-medeffect_related = pd.merge(medeffect_drugs[['REPORT_ID', 'DRUGNAME']],
-                             side_effect_medeffect[['REPORT_ID', 'PT_NAME_ENG']],
-                             how='left',
-                             on='REPORT_ID').dropna()
+medeffect_report_related = pd.merge(drugs_cleaned[['DRUG_PRODUCT_ID', 'DRUGNAME_CLEANED']],
+                                    medeffect_drugs[['DRUG_PRODUCT_ID', 'REPORT_ID']],
+                                    how='inner',
+                                    on='DRUG_PRODUCT_ID')
 
-medeffect_related['DRUGNAME'] = medeffect_related['DRUGNAME'].str.upper()
-medeffect_related['PT_NAME_ENG'] = medeffect_related['PT_NAME_ENG'].str.capitalize()
+medeffect_ADR_related = pd.merge(medeffect_report_related[['REPORT_ID', 'DRUGNAME_CLEANED']],
+                                 side_effect_medeffect[['REPORT_ID', 'PT_NAME_ENG']],
+                                 how='inner',
+                                 on='REPORT_ID')
 
-medeffect_related = medeffect_related.rename(columns={'REPORT_ID': 'MEDEFFECT_REPORT_ID'}).drop_duplicates()
+medeffect_ADR_related['DRUGNAME_CLEANED'] = medeffect_ADR_related['DRUGNAME'].str.upper()
+medeffect_ADR_related['PT_NAME_ENG'] = medeffect_ADR_related['PT_NAME_ENG'].str.capitalize()
+
+medeffect_related = medeffect_ADR_related.rename(columns={'REPORT_ID': 'MEDEFFECT_REPORT_ID'}).drop_duplicates()
 
 medeffect_related['Database'] = 'MEDEFFECT'
 

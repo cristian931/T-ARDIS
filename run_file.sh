@@ -40,7 +40,7 @@ source python_env/bin/activate
 
 python3.7 -m pip install -r requirements.txt > /dev/null 2>&1
 
-#create a database called faers_polishing_procedure
+#create a database called DRUG_ADR_polishing_procedure
 
 echo
 echo Setting up Database
@@ -48,18 +48,18 @@ echo
 
 # if already exist the database disconnect everyone from it
 psql -U postgres \
-     -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'faers_polishing_procedure';"
+     -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'DRUG_ADR_polishing_procedure';"
 
 # drop the entire database for a clean start
 psql -U postgres \
-     -c "drop database if exists faers_polishing_procedure;"  > /dev/null 2>&1
+     -c "drop database if exists DRUG_ADR_polishing_procedure;"  > /dev/null 2>&1
 
 createdb -U postgres \
-         -h localhost faers_polishing_procedure \
+         -h localhost DRUG_ADR_polishing_procedure \
          > /dev/null 2>&1 # create the database
 
 psql -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -c "CREATE SCHEMA faers"  \
      > /dev/null 2>&1 # create the faers schema
 
@@ -172,7 +172,7 @@ mv download ./orange_book.zip
 unzip orange_book.zip > /dev/null 2>&1
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f ../all_scripts/load_nda_table.sql \
      > /dev/null 2>&1
 cd ..
@@ -184,7 +184,7 @@ echo Loading ISO Codes
 echo
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/load_country_code_table.sql \
      > /dev/null 2>&1
 
@@ -195,7 +195,7 @@ echo Loading EU references
 echo
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/load_eu_drug_name_active_ingredient_table.sql \
      > /dev/null 2>&1
 
@@ -205,7 +205,7 @@ echo
 echo Updating Athena Vocabularies
 echo
 cd athena
-java -Dumls-user=cristianogalletti -Dumls-password=mr.killjoy93 -jar cpt4.jar 5
+java -Dumls-user='''update_with_your_ULMS_username''' -Dumls-password='''your_UMLS_password''' -jar cpt4.jar 5
 cd ..
 
 
@@ -215,37 +215,37 @@ echo Loading Athena files in Database
 echo
 
 psql -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -c "CREATE SCHEMA cdmv5" \
      > /dev/null
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/data_table_creation_athena_step_1.sql \
       > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/data_table_creation_athena_step_2.sql \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/data_table_creation_athena_step_3.sql \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/data_table_creation_athena_step_4.sql \
      > /dev/null 2>&1
 
 psql -h localhost  \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/data_table_creation_athena_step_5.sql \
      > /dev/null 2>&1
 
@@ -256,7 +256,7 @@ echo Creating Meddra-Snowmed reference Map
 echo
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/create_meddra_snomed_mapping_table.sql \
      > /dev/null 2>&1
 
@@ -268,13 +268,13 @@ echo
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/load_legacy_faers.sql \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/load_current_faers.sql \
      > /dev/null 2>&1
 
@@ -286,7 +286,7 @@ echo
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/derive_unique_all_case.sql \
      > /dev/null 2>&1
 
@@ -297,7 +297,7 @@ echo Mapping drug with Rx-norm db \(without Usagi procedure\)
 echo
 
 psql -h localhost -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/map_all_drugname_to_rxnorm_without_usagi.sql \
      > /dev/null 2>&1
 
@@ -306,25 +306,25 @@ psql -h localhost -U postgres \
 mkdir FAERS_almost_clean
 
 psql -h localhost -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -f all_scripts/standardize_combined_drug_mapping.sql \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -c "\copy faers.standard_case_drug TO 'FAERS_almost_clean/cleaned_faers_drugs.csv' DELIMITER ',' CSV HEADER;" \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -c "\copy faers.reac_pt_legacy_list TO 'FAERS_almost_clean/legacy_side_effects.csv' DELIMITER ',' CSV HEADER;" \
      > /dev/null 2>&1
 
 psql -h localhost \
      -U postgres \
-     -d faers_polishing_procedure \
+     -d DRUG_ADR_polishing_procedure \
      -c "\copy faers.reac_pt_list TO 'FAERS_almost_clean/current_side_effects.csv' DELIMITER ',' CSV HEADER;" \
      > /dev/null 2>&1
 
@@ -365,6 +365,52 @@ rm *zip
 mv cvponline*/* .
 rmdir cvponline*
 cd ..
+
+# MEDEFFECT Cleaning Procedure (Applying the same steps of FAERS)
+
+psql -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -c "CREATE SCHEMA medeffect"  \
+     > /dev/null 2>&1 # create the medeffect schema
+
+cd orange_book
+psql -h localhost \
+     -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -f ../all_scripts/load_nda_table_med.sql \
+     > /dev/null 2>&1
+cd ..
+
+psql -h localhost \
+     -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -f all_scripts/load_eu_drug_name_active_ingredient_table_med.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -f all_scripts/load_medeffect.sql \
+     > /dev/null 2>&1
+
+psql -h localhost -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -f all_scripts/map_drugname_to_rxnorm_medeffect.sql \
+     > /dev/null 2>&1
+
+psql -h localhost -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -f all_scripts/standardize_combined_drug_mapping_med.sql \
+     > /dev/null 2>&1
+
+psql -h localhost \
+     -U postgres \
+     -d DRUG_ADR_polishing_procedure \
+     -c "\copy medeffect.standard_case_drug TO 'MEDEFFECT/MEDEFFECT_DRUG_CLEANED.csv' DELIMITER ',' CSV HEADER;" \
+     > /dev/null 2>&1
+
+
+
 
 
 # SIDER Download
@@ -429,7 +475,7 @@ cd DRUGBANK
 #For accessing some files in DRUGBANK is needed a subscription
 curl -Lfv \
      -o all.zip \
-     -u cristiano.galletti@uvic.cat:mr.killjoy93 \
+     -u '''your_drugbank_username''':'''ypur_drugbank_password''' \
      https://www.drugbank.ca/releases/5-1-5/downloads/target-all-polypeptide-ids \
      > /dev/null 2>&1
 
