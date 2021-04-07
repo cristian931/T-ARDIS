@@ -521,24 +521,6 @@ python3.7 all_scripts/Target_database_cleaning.py > /dev/null 2>&1
 mkdir relationship_analysis_input_files
 mv *.input relationship_analysis_input_files
 
-# Use FAERS cleaned drugs name as filter for MEDEFFECT in order to give a reasonable cleaning
-awk -F"\t" '{print $2}' relationship_analysis_input_files/FAERS_DRUG_SE.input | sort -u | grep -v lookup_value > relationship_analysis_input_files/FAERS_DRUGS
-grep -f relationship_analysis_input_files/FAERS_DRUGS relationship_analysis_input_files/MEDEFFECT_DRUG_SE.input > relationship_analysis_input_files/tmp
-
-# extract and modify the MEDEFFECT drug names
-awk -F"\t" '{print $2}' relationship_analysis_input_files/tmp | awk '{print $1}' > relationship_analysis_input_files/modified_drugs
-
-# extract the other columns and recreate the final file
-awk -F"\t" '{print $1}' relationship_analysis_input_files/tmp > relationship_analysis_input_files/report_ID
-awk -F"\t" '{print $3"\t"$4"\t"$5}' tmp > relationship_analysis_input_files/final_columns
-paste  relationship_analysis_input_files/report_ID relationship_analysis_input_files/modified_drugs relationship_analysis_input_files/final_columns > relationship_analysis_input_files/MEDEFFECT_DRUG_SE.input
-
-rm relationship_analysis_input_files/report_ID
-rm relationship_analysis_input_files/tmp
-rm relationship_analysis_input_files/final_columns
-rm relationship_analysis_input_files/modified_drugs
-rm relationship_analysis_input_files/FAERS_DRUGS
-
 echo
 echo Final computation in progress
 echo
