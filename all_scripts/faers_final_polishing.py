@@ -17,6 +17,7 @@ def cleaner(drug_file, legacy_reac, current_reac):
     # the FAERS version and the ISR for the Legacy version
     drug_pt_1 = pd.merge(drug[['primaryid', 'isr', 'lookup_value']], side_effect_legacy, how='left', on='isr')
     drug_pt_2 = pd.merge(drug_pt_1, side_effect_current, how='left', on='primaryid')
+    drug_pt_2['lookup_value'] = drug_pt_2['lookup_value'].str.replace(' HYDROCHLORIDE', '')
 
     # create an unique column for the side effects (merging FAERS and LAERS) and drop the old columns
     drug_pt_2['reac_pt_list'] = drug_pt_2['reac_pt_list_x'].fillna(drug_pt_2['reac_pt_list_y'])
@@ -34,6 +35,7 @@ def cleaner(drug_file, legacy_reac, current_reac):
     faers_pairwise = drug_all_no_pt_na[['FAERS_ID', 'lookup_value', 'reac_pt_list']].explode('reac_pt_list')
     faers_pairwise['reac_pt_list'] = faers_pairwise['reac_pt_list'].str.capitalize()
     faers_final = faers_pairwise.drop_duplicates()
+    faers_final = faers_final[~faers_final['lookup_value'].str.contains('/')]
 
     faers_final['Database'] = 'FAERS'
 

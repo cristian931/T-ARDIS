@@ -53,7 +53,10 @@ medeffect_drugs = pd.read_csv('MEDEFFECT/report_drug.txt', sep='$', names=header
 side_effect_medeffect = pd.read_csv('MEDEFFECT/reactions.txt', sep='$', names=header_reaction, dtype=object)
 
 drugs_cleaned = pd.read_csv('MEDEFFECT/MEDEFFECT_DRUG_CLEANED.csv', sep=',', names=header_cleaned_drugs, dtype=object)
-# now we relate the drugname and the se using the id as intermediate
+
+# remove entries with multiple drugs at the same time
+drugs_cleaned = drugs_cleaned[~drugs_cleaned['DRUGNAME_CLEANED'].str.contains('/')]
+drugs_cleaned['DRUGNAME_CLEANED'] = drugs_cleaned['DRUGNAME_CLEANED'].str.replace(' HYDROCLORIDE', '')
 
 medeffect_report_related = pd.merge(drugs_cleaned[['DRUG_PRODUCT_ID', 'DRUGNAME_CLEANED']],
                                     medeffect_drugs[['DRUG_PRODUCT_ID', 'REPORT_ID']],
