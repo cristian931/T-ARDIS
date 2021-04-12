@@ -68,7 +68,7 @@ medeffect_ADR_related = pd.merge(medeffect_report_related[['REPORT_ID', 'DRUGNAM
                                  how='inner',
                                  on='REPORT_ID')
 
-medeffect_ADR_related['DRUGNAME_CLEANED'] = medeffect_ADR_related['DRUGNAME'].str.upper()
+medeffect_ADR_related['DRUGNAME_CLEANED'] = medeffect_ADR_related['DRUGNAME_CLEANED'].str.upper()
 medeffect_ADR_related['PT_NAME_ENG'] = medeffect_ADR_related['PT_NAME_ENG'].str.capitalize()
 
 medeffect_related = medeffect_ADR_related.rename(columns={'REPORT_ID': 'MEDEFFECT_REPORT_ID'}).drop_duplicates()

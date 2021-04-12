@@ -31,12 +31,12 @@ faers = faers.rename(columns={'lookup_value': 'drug',
 medeffect = pd.read_csv('relationship_analysis_input_files/MEDEFFECT_DRUG_SE.input',
                         sep='\t',
                         dtype=object,
-                        usecols=['DRUGNAME',
+                        usecols=['DRUGNAME_CLEANED',
                                  'PT_NAME_ENG',
                                  'Database'
                                  ]
                         )
-medeffect = medeffect.rename(columns={'DRUGNAME': 'drug',
+medeffect = medeffect.rename(columns={'DRUGNAME_CLEANED': 'drug',
                                       'PT_NAME_ENG': 'se',
                                       'Database': 'Database_MEDEFFECT'
                                       }
@@ -186,7 +186,7 @@ dr_tg_pairwise = interaction[['drug', 'target']].explode('target').groupby('targ
 dr_tg_pairwise['tg_drug_len'] = dr_tg_pairwise['drug'].apply(lambda x: len(x))
 
 # extract from dataset the pairwise interaction between side effect and targets, since both are lists, we need first
-# to explode one list (se) extract the column of interst and then explode the target list.
+# to explode one list (se) extract the column of interest and then explode the target list.
 
 se_tg_pairwise_part_1 = interaction.explode('se')[['se', 'target']].explode('target')
 
