@@ -1,113 +1,52 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-"""This script is used to clean the different drug-target databases, the idea is to have as final output a pairwise
-relationship between the drug and the targets as Uniprot ids """
+"""This script is used to clean the drug-target database, the idea is to have as final output a pairwise
+relationship between the drug and the targets as Uniprot ids filtered out for significant activation assays like the
+IC50 value"""
 
 
 import pandas as pd
 
+df = pd.read_csv('DRUG_TARGETS_COMMONS/DTC_data.csv',
+                 usecols=['standard_inchi_key',
+                          'compound_name',
+                          'target_id',
+                          'standard_type',
+                          'standard_relation',
+                          'standard_value',
+                          'standard_units']).dropna()
 
-# DRUGBANK: From Drugbank two different file have been downloaded, the drugbank vocabulary, containing the drugs
-# names and their respective codes and the Target file, containg the information of the drugs' targets and the
-# relationship with the former
+dfIC50 = df[df['standard_type'] == 'IC50']
+dfIC50_active = dfIC50[(dfIC50['standard_value'] <= 100)
+                       &
+                       (dfIC50['standard_units'] == 'NM')]
 
-drug_drugbank_file = pd.read_csv('DRUGBANK/drugbank vocabulary.csv',
-                                 dtype=object
-                                 )
+dfIC50_active = dfIC50_active[['standard_inchi_key',
+                               'compound_name',
+                               'target_id']]
 
-drug_drugbank = drug_drugbank_file[['DrugBank ID', 'Common name']].rename(columns={'DrugBank ID': 'Drug IDs'})
+dfIC50_active['target_id'] = dfIC50_active['target_id'].apply(lambda x: x.split(', '))  # some uniprot id are listed
+# together as strings, transform them into list
 
-drug_drugbank['Drug IDs'] = drug_drugbank['Drug IDs'].str.strip()  # remove possible whitespaces from ID
+dfIC50_active = dfIC50_active.explode('target_id')  # get single pairwise drug uniprot id relationship
+# for those listed together
 
+inchi_key_grouped = dfIC50_active.groupby('standard_inchi_key').agg(set)  # Collapse drugs with the same INCHI key (same compound)
 
-target_drugbank_file = pd.read_csv('DRUGBANK/all.csv',
-                                   dtype=object
-                                   )
+inchi_key_grouped['len'] = inchi_key_grouped['compound_name'].apply(lambda x: len(x))  # Check how many different drugs name map on the same INCHI key
 
-target_drugbank = target_drugbank_file[['UniProt ID', 'Drug IDs']]
+inchi_key_grouped['compound_name'] = inchi_key_grouped.apply(
+    lambda row: [item for item in row['compound_name'] if item.isalpha()] if row['len'] > 1 else row['compound_name'],
+    axis=1)  # in case of INCHI keys mapping to different drug names (few cases) retrieve just the one with a complete
+# drugname (i.e. not containing number or special characters)
 
-target_drugbank['Drug IDs'] = target_drugbank['Drug IDs'].apply(lambda x: x.split(';'))
+final = inchi_key_grouped.explode('compound_name').dropna()
+final = final[~(final['compound_name'] == 'None')]
+# Be sure of removing possible missing entries and drugnames
+final = final.drop(columns=['len']).explode('target_id').reset_index()  # obtain drug-target pairwise
+# relationship
+final['Database'] = 'Drug_Target_Commons'
+final.to_csv('Drug_Target_Commons.input', sep='\t', index=False)
 
-target_exploded = target_drugbank.explode('Drug IDs')
-
-target_exploded['Drug IDs'] = target_exploded['Drug IDs'].str.strip()
-
-drugbank_merged = pd.merge(drug_drugbank,
-                           target_exploded,
-                           how='left',
-                           on='Drug IDs'
-                           ).dropna()
-
-drugbank_merged['Common name'] = drugbank_merged['Common name'].str.upper()
-
-drugbank_final = drugbank_merged.drop_duplicates()
-
-drugbank_final['Database'] = 'DRUGBANK'
-
-drugbank_final.to_csv('DRUGBANK_DRUG_TG.input',
-                      sep='\t',
-                      index=False)
-
-########################################################################################################################
-
-# DGiDB: unique File from which extract the information. However the conversion from Gene name to UNIPROT id is
-# needed. the latter has been downloaded from uniprot searching for the human proteome and selecting the uniprot
-# entries together with the gene names and also the gene names synonyms
-
-dgidb_file = pd.read_csv('DGidb/interactions.tsv', sep='\t')
-
-dgidb_interactions = dgidb_file[['drug_claim_primary_name','gene_claim_name']].dropna()
-dgidb_interactions['drug_claim_primary_name'] = dgidb_interactions['drug_claim_primary_name']\
-                                                .apply(lambda x: x.split(', '))
-
-dgidb_interactions = dgidb_interactions.explode('drug_claim_primary_name')
-
-dgidb_interactions['drug_claim_primary_name'] = dgidb_interactions['drug_claim_primary_name'].str.upper()
-
-
-uniprot = pd.read_csv('human_proteome_gene_names_11_03.tab',
-                      sep='\t',
-                      names=['Uniprot ID', 'Primary Gene', 'Synonym'],
-                      header=0).fillna('')
-
-uniprot['Gene names'] = uniprot[['Primary Gene', 'Synonym']].agg(' '.join, axis=1)
-uniprot['Gene names'] = uniprot['Gene names'].apply(lambda x: x.strip().split())
-
-uniprot_exploded = uniprot[['Uniprot ID', 'Gene names']].explode('Gene names')
-
-
-dgidb_merged = pd.merge(dgidb_interactions,
-                        uniprot_exploded,
-                        left_on=['gene_claim_name'],
-                        right_on=['Gene names'],
-                        how='left'
-                        )\
-                        .dropna().drop(columns=['gene_claim_name'])
-
-dgidb_final = dgidb_merged.drop_duplicates()
-
-dgidb_final['Database'] = 'DGIDB'
-
-dgidb_final.to_csv('DGIDB_DRUG_TG.input', sep='\t', index=False)
-
-########################################################################################################################
-
-# DRUGCENTRAL
-
-drugcentral_file = pd.read_csv('DRUG_CENTRAL/drug.target.interaction.tsv', sep='\t', dtype=object)
-
-drugcentral = drugcentral_file.loc[drugcentral_file['ORGANISM'] == 'Homo sapiens'][['DRUG_NAME', 'ACCESSION', 'GENE']]
-
-drugcentral['DRUG_NAME'] = drugcentral['DRUG_NAME'].str.upper()
-
-drugcentral['ACCESSION'] = drugcentral['ACCESSION'].apply(lambda x: x.split('|'))
-
-drugcentral['GENE'] = drugcentral['GENE'].apply(lambda x: x.split('|'))
-
-drugcentral_final = drugcentral.explode('ACCESSION')
-
-drugcentral_final['Database'] = 'DRUGCENTRAL'
-
-drugbank_final.to_csv('DRUGCENTRAL_DRUG_TG.input', sep='\t', index=False)
 

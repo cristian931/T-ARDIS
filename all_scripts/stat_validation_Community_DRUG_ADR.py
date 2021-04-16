@@ -68,7 +68,7 @@ def multinomial_distribution_and_MonteCarlo_sampling(cross_table):
     rng = np.random.default_rng(seed=42)
     for drugname in list(cross_table.columns):
         mult_dis = rng.multinomial(cross_table[drugname]['Total_Reports'],
-                                         Total_Adverse_Event_reports_probabilities)
+                                   Total_Adverse_Event_reports_probabilities)
         dist_list.append((drugname, mult_dis))
 
     dist_df = pd.DataFrame(dist_list, columns=['drugname', 'Distribution'])
@@ -87,18 +87,34 @@ if __name__ == '__main__':
     df = pd.read_csv(sys.argv[1], sep='\t')
     database = sys.argv[2]
     crosstable = create_cross_table(df)
-    data = [(x, y) for x in list(crosstable.columns)[:-1] for y in list(crosstable.index)[:-1]]
+    data = [(x, y) for x in list(crosstable.columns)[:-1] for y in list(crosstable.index)[:-1]]  # create every possible relationship between drug and SE
     LLR_dataframe = pd.DataFrame(
         data=data,
         columns=['drugname', 'adverse_event']
     )
     # print(LLR_dataframe)
 
-    LLR_dataframe['logLR'] = LLR_dataframe.parallel_apply(parallel_log_likelihood_ratio, cross_table=crosstable, axis=1)
+    LLR_dataframe['logLR'] = LLR_dataframe.parallel_apply(parallel_log_likelihood_ratio,
+                                                          cross_table=crosstable,
+                                                          axis=1
+                                                          )
     # LLR_dataframe.to_csv('LLR_dataframe_temp', sep='\t', index=False)
+    LLR_dataframe = LLR_dataframe.dropna()
     distributions_df = multinomial_distribution_and_MonteCarlo_sampling(crosstable)
     # distributions_df.to_csv('MonteCarlo_sampling_distribution', sep='\t', index=False)
-    compare_dist_to_LLR = pd.merge(LLR_dataframe, distributions_df, on='drugname', how='left')
-    compare_dist_to_LLR['significant'] = np.where(compare_dist_to_LLR['logLR'] >= compare_dist_to_LLR['5th_perc'], 'yes', 'no')
-    compare_dist_to_LLR[compare_dist_to_LLR['significant'] == 'yes'].to_csv('Significant_interaction_' + database, sep='\t')
+
+    compare_dist_to_LLR = pd.merge(LLR_dataframe,
+                                   distributions_df,
+                                   on='drugname',
+                                   how='left')
+
+    compare_dist_to_LLR['significant'] = np.where(
+        compare_dist_to_LLR['logLR'] >= compare_dist_to_LLR['5th_perc'],
+        'yes',
+        'no'
+    )
+    positives = compare_dist_to_LLR[compare_dist_to_LLR['significant'] == 'yes']
+    positives['Database'] = database
+    filtered_positives = positives[['drugname', 'adverse_event', 'logLR', '5th_perc', 'Database']]
+    filtered_positives.to_csv('Significant_interaction_' + database + '.input', sep='\t')
 

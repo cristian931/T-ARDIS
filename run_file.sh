@@ -99,9 +99,10 @@ done
 mv DEMO18Q1_new.txt ./DEMO18Q1.txt 2> /dev/null
 
 # convert all file names in uppercase (even extension)
+# shellcheck disable=SC2045
 for i in $( ls )
 do
-    mv -i $i `echo $i | tr 'a-z' 'A-Z'`
+    mv -i "$i" $(echo "$i" | tr 'a-z' 'A-Z')
 done 2> /dev/null
 
 
@@ -445,6 +446,11 @@ echo Cleaning Other Drug-Side effects Databases
 echo
 python3.7 all_scripts/Cleaning_procedure.py > /dev/null 2>&1
 
+
+# Statistical Validation of FAERS and MEDEFFECT data
+
+python3.7 all_scripts/stat_validation_Community_DRUG_ADR FAERS_DRUG_SE.input FAERS
+python3.7 all_scripts/stat_validation_Community_DRUG_ADR MEDEFFECT_DRUG_SE.input MEDEFFECT
 #######################################################################
 
 
@@ -454,52 +460,13 @@ echo
 echo Starting Downloading Drug-Targets Databases
 echo
 
-
-#download dgidb
-echo Downloading DGIdb
+#Download DRUG_TARGETS_COMMONS
 echo
-
-mkdir DGidb
-cd DGidb
-wget www.dgidb.org/data/interactions.tsv > /dev/null 2>&1
-cd ..
-
-
-#dowload drugbank files
+echo Downloading Drug DRUG_TARGETS_COMMONS
 echo
-echo Dowloading Drugbank
-echo
-
-mkdir DRUGBANK
-cd DRUGBANK
-#For accessing some files in DRUGBANK is needed a subscription
-curl -Lfv \
-     -o all.zip \
-     -u '''your_drugbank_username''':'''ypur_drugbank_password''' \
-     https://www.drugbank.ca/releases/5-1-5/downloads/target-all-polypeptide-ids \
-     > /dev/null 2>&1
-
-curl -Lfv \
-     -o drugbank_vocabulary.zip \
-     https://www.drugbank.ca/releases/5-1-5/downloads/all-drugbank-vocabulary \
-     > /dev/null 2>&1
-
-unzip all.zip > /dev/null
-rm pharmacologically_active.csv
-unzip drugbank_vocabulary.zip > /dev/null 2>&1
-rm *zip
-cd ..
-
-
-
-#Download DRUG_CENTRAL
-echo
-echo Downloading Drug Central
-echo
-mkdir DRUG_CENTRAL
-cd DRUG_CENTRAL
-wget unmtid-shinyapps.net/download/drug.target.interaction.tsv.gz > /dev/null 2>&1
-gunzip drug.target.interaction.tsv.gz > /dev/null 2>&1
+mkdir DRUG_TARGETS_COMMONS
+cd DRUG_TARGETS_COMMONS
+wget --no-check-certificate https://drugtargetcommons.fimm.fi/static/Excell_files/DTC_data.csv > /dev/null 2>&1
 cd ..
 
 
