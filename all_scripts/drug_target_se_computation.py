@@ -10,7 +10,7 @@ import scipy.stats as stats
 from multipy.fdr import qvalue
 from pandarallel import pandarallel
 
-pandarallel.initialize()
+pandarallel.initialize(progress_bar=True)
 
 # Load the drug-se databases previously cleaned
 
@@ -96,7 +96,8 @@ def meddra_cleaning(dataset):
                           'Neoplasms benign, malignant and unspecified (incl cysts and polyps)',
                           'Product issues',
                           'Social circumstances',
-                          'Surgical and medical procedures']
+                          'Surgical and medical procedures',
+                          'Infections and infestations']
 
     list_adr_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].to_list()
 
@@ -212,13 +213,12 @@ def fisher(x, interaction_len):
 
 
 def final_adjustements(drug_adr_database, drug_target_database, database_type):
-    # Select the pair column only in order to simplify the computation
 
     interaction, interaction_len, values, lighter = target_se_merging(drug_adr_database, drug_target_database)
 
     lighter['pvalue'] = values.parallel_apply(fisher, interaction_len=interaction_len, axis=1)
 
-    lighter.to_csv('p_value_computed' + database_type + '.csv',
+    lighter.to_csv('p_value_computed_' + database_type + '.csv',
                    sep='\t',
                    index=False
                    )
@@ -231,13 +231,13 @@ def final_adjustements(drug_adr_database, drug_target_database, database_type):
 
     Final = lighter.drop_duplicates()
 
-    Final.to_csv('qvalues_interactions' + database_type,
+    Final.to_csv('qvalues_interactions_' + database_type,
                  sep='\t',
                  index=False
                  )
 
     accepted = Final.loc[Final['qvals'] <= 0.05]
-    accepted.to_csv('accepted_interactions' + database_type,
+    accepted.to_csv('accepted_interactions_' + database_type,
                     sep='\t',
                     index=False
                     )
@@ -320,7 +320,6 @@ drugtargetcommons = drugtargetcommons.rename(columns={'compound_name': 'drug',
                                                       'Database': 'Database_DTC'
                                                       }
                                              )
-
 df_target = drugtargetcommons[['drug', 'target']] \
     .groupby('drug') \
     .agg(lambda x: list(set(x.tolist()))) \
@@ -328,9 +327,7 @@ df_target = drugtargetcommons[['drug', 'target']] \
 
 df_se_community = meddra_cleaning(df_se_community)
 df_se_controlled = meddra_cleaning(df_se_controlled)
-
 interaction_community, accepted_community = final_adjustements(df_se_community, df_target, 'community')
 interaction_controlled, accepted_controlled = final_adjustements(df_se_controlled, df_target, 'controlled')
-
 TARDIS_tables(interaction_community, accepted_community, 'community')
 TARDIS_tables(interaction_controlled, accepted_controlled, 'controlled')
