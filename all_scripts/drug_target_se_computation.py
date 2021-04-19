@@ -315,9 +315,9 @@ drugtargetcommons = pd.read_csv('relationship_analysis_input_files/Drug_Target_C
                                          ]
                                 )
 
-drugtargetcommons = drugtargetcommons.rename(columns={'Common name': 'drug',
-                                                      'UniProt ID': 'target',
-                                                      'Database': 'Database_DRUGBANK'
+drugtargetcommons = drugtargetcommons.rename(columns={'compound_name': 'drug',
+                                                      'target_id': 'target',
+                                                      'Database': 'Database_DTC'
                                                       }
                                              )
 
