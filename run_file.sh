@@ -206,7 +206,11 @@ echo
 echo Updating Athena Vocabularies
 echo
 cd athena
-java -Dumls-user='''update_with_your_ULMS_username''' -Dumls-password='''your_UMLS_password''' -jar cpt4.jar 5
+echo Enter UMLS username:
+read varname
+echo Enter UMLS password:
+read varpassw
+java -Dumls-user="$varname" -Dumls-password="$varpassw" -jar cpt4.jar 5
 cd ..
 
 

@@ -15,8 +15,6 @@ In order to make it works a couple of pre-processing steps are necessary.
     vocabularies".
   - Save and extract the files in a folder called "athena" in the same parent folder in which are saved all the other 
     repository files.
-  - **IMPORTANT: Update the run_file.sh with your UMLS credential (line 208) and DRUGBANK credential (line 478) in order
-    to download and update the data.**  
 3) Launch the run_file.sh script
   - The script will start downloading the updated files of the different DRUG - SIDE EFFECT databases:
   
@@ -28,13 +26,9 @@ In order to make it works a couple of pre-processing steps are necessary.
       
       - SIDER_4.1 (http://sideeffects.embl.de/)
       
-  - And the updated versions of the DRUG - TARGETs databases:
+  - And the updated versions of the DRUG - TARGET database:
   
-      - DRUGBANK (https://www.drugbank.ca/)
-      
-      - DRUGCENTRAL (http://drugcentral.org/)
-      
-      - DGidb (http://www.dgidb.org/)
+      - DRUG TARGET COMMONS (https://drugtargetcommons.fimm.fi/)
 
 4) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise 
    relationships between the Drug's targets and side effects exploiting the drug name as bridge.
@@ -46,6 +40,7 @@ pairs have been filtered out whenever the ADR term fall in any of this particula
 body parts or underlying human biology, as pointed on the definitions of MedDRA’s guidelines
 (https://admin.new.meddra.org/sites/default/files/guidance/file/intguide_%2023_1_English.pdf)
   - General disorders and administration site conditions
+  - Infections and Infestations  
   - Injury, poisoning and procedural complications
   - Investigations
   - Neoplasms benign, malignant and unspecified [incl cysts and polyps]
@@ -67,6 +62,8 @@ Different files of output are obtained from the procedure:
 
 # Usage
 1) Set up the postgresql server
+2) Make sure that the connection in local works without a password (modify the postgresql file pg_hba as method "trust" 
+   for "local")   
 2) clone or download all the file in the repository and save it to a folder
 3) Download the Athena dictionaries and save them into a folder called "athena" inside the repository folder
 4) run the run_file.sh script (you need to have the permission to create/remove folder)
