@@ -87,8 +87,10 @@ do
 	mv ASCII/* . 2> /dev/null
 	rm -rf ASCII/ 2> /dev/null
 	rm -rf deleted/ 2> /dev/null
+	rm -r DELETED/ 2> /dev/null
 	rmdir ascii/ 2> /dev/null
 	rm -rf *.pdf 2> /dev/null
+	rm -rf *.PDF 2> /dev/null
 	rm -rf FAQs* 2> /dev/null
 	rm -rf Readme* 2> /dev/null
 	rm -rf ASC_NTS* 2> /dev/null
