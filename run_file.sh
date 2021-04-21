@@ -32,7 +32,8 @@
 echo
 echo setting up Python Virtual Enviroment and installing required packages
 
-mkdir python_env
+foldvar=python_env
+mkdir $foldvar
 
 python3.7 -m venv ./python_env --clear
 
@@ -72,15 +73,16 @@ echo
 # use a python script to get the links for downloading the FAERS data
 python3.7 all_scripts/get_urls.py | grep ascii > urls
 
-mkdir faers_files
-cd faers_files
+foldvar=faers_files
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 
-for url in `cat ../urls`
+for url in $(cat ../urls)
 do
-	name=`echo ${url} | sed 's|https://fis.fda.gov/content/Exports/||g'`
-	echo Downloading ${name}
-	wget ${url} > /dev/null 2>&1
-	unzip ${name} > /dev/null 2>&1
+	name=$(echo ${url} | sed 's|https://fis.fda.gov/content/Exports/||g')
+	echo Downloading "${name}"
+	wget "${url}" > /dev/null 2>&1
+	unzip "${name}" > /dev/null 2>&1
 
 	# remove the non necessary file for each data package
 	mv ascii/* . 2> /dev/null
@@ -101,10 +103,9 @@ done
 mv DEMO18Q1_new.txt ./DEMO18Q1.txt 2> /dev/null
 
 # convert all file names in uppercase (even extension)
-# shellcheck disable=SC2045
-for i in $( ls )
+for i in *
 do
-    mv -i "$i" $(echo "$i" | tr 'a-z' 'A-Z')
+    mv -i "$i" "$(echo "$i" | tr '[:lower:]' '[:upper:]')"
 done 2> /dev/null
 
 
@@ -131,11 +132,11 @@ do
 	ls | grep ${type} > tmp # grep the file of interest
 
 	# transform the type to lowercase to match the name of the new files
-	type_lower=`echo ${type} | tr '[:upper:]' '[:lower:]'`
+	type_lower=$(echo "${type}" | tr '[:upper:]' '[:lower:]')
 	
-	for file in `cat tmp` # check the file if are later than 2018q4
+	for file in $(cat tmp) # check the file if are later than 2018q4
 	do
-		value=`echo ${file} | sed "s/${type}//g" | sed 's/Q//g' | sed 's/.TXT//g'`
+		value=$(echo "${file}" | sed "s/${type}//g" | sed 's/Q//g' | sed 's/.TXT//g')
 		if [[ ${value#0} -gt 184 ]] # 184 is the suffix of file from year 18q4 without the q, 
 					    # so if the suffix on the file is bigger than 184 it means that the file is later
 					    # 2018 and have to be processed and appended.
@@ -168,8 +169,9 @@ rm -rf urls 2> /dev/null
 echo
 echo Orange book download and Load
 echo
-mkdir orange_book
-cd orange_book
+foldvar=orange_book
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 wget https://www.fda.gov/media/76860/download > /dev/null 2>&1
 mv download ./orange_book.zip
 unzip orange_book.zip > /dev/null 2>&1
@@ -207,7 +209,7 @@ psql -h localhost \
 echo
 echo Updating Athena Vocabularies
 echo
-cd athena
+cd athena || { echo "Error folder not found"; exit 1; }
 read -p "Enter UMLS apikey \(retrivable at https://uts.nlm.nih.gov/uts/profile\): " varname
 java -Dumls-apikey="$varname" -jar cpt4.jar 5
 cd ..
@@ -357,8 +359,9 @@ echo
 echo Downloading Medeffect
 echo
 
-mkdir MEDEFFECT
-cd MEDEFFECT
+foldvar=MEDEFFECT
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 
 wget \
 https://www.canada.ca/content/dam/hc-sc/migration/hc-sc/dhp-mps/alt_formats/zip/medeff/databasdon/extract_extrait.zip \
@@ -377,7 +380,7 @@ psql -U postgres \
      -c "CREATE SCHEMA medeffect"  \
      > /dev/null 2>&1 # create the medeffect schema
 
-cd orange_book
+cd orange_book || { echo "Error orange_book folder not found"; exit 1; }
 psql -h localhost \
      -U postgres \
      -d DRUG_ADR_polishing_procedure \
@@ -423,8 +426,10 @@ echo
 echo Dowloading SIDER 4.1
 echo
 
-mkdir SIDER_4.1
-cd SIDER_4.1
+foldvar=SIDER_4.1
+
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 wget sideeffects.embl.de/media/download/drug_names.tsv > /dev/null 2>&1
 wget sideeffects.embl.de/media/download/meddra_all_se.tsv.gz > /dev/null 2>&1
 gunzip meddra_all_se.tsv.gz > /dev/null 2>&1
@@ -436,8 +441,9 @@ echo
 echo Downloading OFFSIDE
 echo
 
-mkdir OFFSIDE
-cd OFFSIDE
+foldvar=OFFSIDE
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 wget tatonettilab.org/resources/nsides/OFFSIDES.csv.gz > /dev/null 2>&1
 gunzip OFFSIDES.csv.gz > /dev/null 2>&1
 cd ..
@@ -467,8 +473,10 @@ echo
 echo
 echo Downloading Drug DRUG_TARGETS_COMMONS
 echo
-mkdir DRUG_TARGETS_COMMONS
-cd DRUG_TARGETS_COMMONS
+
+foldvar=DRUG_TARGETS_COMMONS
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 wget --no-check-certificate https://drugtargetcommons.fimm.fi/static/Excell_files/DTC_data.csv > /dev/null 2>&1
 cd ..
 
@@ -489,7 +497,7 @@ python3.7 all_scripts/Target_database_cleaning.py > /dev/null 2>&1
 
 
 mkdir relationship_analysis_input_files
-mv *.input relationship_analysis_input_files
+mv *.input relationship_analysis_input_files/
 
 echo
 echo Final computation in progress
