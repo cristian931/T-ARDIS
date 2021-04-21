@@ -81,13 +81,13 @@ do
 	echo Downloading ${name}
 	wget ${url} > /dev/null 2>&1
 	unzip ${name} > /dev/null 2>&1
-	
+
 	# remove the non necessary file for each data package
 	mv ascii/* . 2> /dev/null
 	mv ASCII/* . 2> /dev/null
 	rm -rf ASCII/ 2> /dev/null
 	rm -rf deleted/ 2> /dev/null
-	rm -r DELETED/ 2> /dev/null
+	rm -rf DELETED/ 2> /dev/null
 	rmdir ascii/ 2> /dev/null
 	rm -rf *.pdf 2> /dev/null
 	rm -rf *.PDF 2> /dev/null
@@ -208,11 +208,8 @@ echo
 echo Updating Athena Vocabularies
 echo
 cd athena
-echo Enter UMLS username:
-read varname
-echo Enter UMLS password:
-read varpassw
-java -Dumls-user="$varname" -Dumls-password="$varpassw" -jar cpt4.jar 5
+read -p "Enter UMLS apikey \(retrivable at https://uts.nlm.nih.gov/uts/profile\): " varname
+java -Dumls-apikey="$varname" -jar cpt4.jar 5
 cd ..
 
 
