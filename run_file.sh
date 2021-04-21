@@ -6,13 +6,13 @@
 #
 # This Script is used to Automatize the FAERS cleaning procedure (That rely on a Postgresql and different vocabularies), 
 # the download and cleaning procedure of three different drug-se databases (MEDEFFECT
-# OFFSIDE and SIDER (using a python script), and other three different DRUG - TARGET databases
-# (DRUGBANK, DRUGCENTRAL, MATADOR) cleaned with a python script too.
+# OFFSIDE and SIDER (using a python script), and a compendium of different DRUG-TARGET databases calle DRUG-TARGETS COMMON,
+# cleaned with a python script too.
 # The script manages the downloading and unpacking of file, the folder creation and file / database management.
 #
 # The script is divided in sections based on the work done
 # The entire procedure will require at least two days and AT LEAST 45 GB OF FREE MEMORY, 
-# since the files are huge and unfurtunately need to be processed at the same time
+# since the files are huge and unfortunately need to be processed at the same time
 #
 # USAGE bash download_data.sh
 #
