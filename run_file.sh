@@ -458,8 +458,8 @@ python3.7 all_scripts/Cleaning_procedure.py > /dev/null 2>&1
 
 # Statistical Validation of FAERS and MEDEFFECT data
 
-python3.7 all_scripts/stat_validation_Community_DRUG_ADR FAERS_DRUG_SE.input FAERS
-python3.7 all_scripts/stat_validation_Community_DRUG_ADR MEDEFFECT_DRUG_SE.input MEDEFFECT
+python3.7 all_scripts/stat_validation_Community_DRUG_ADR.py FAERS_DRUG_SE.input FAERS
+python3.7 all_scripts/stat_validation_Community_DRUG_ADR.py MEDEFFECT_DRUG_SE.input MEDEFFECT
 #######################################################################
 
 
