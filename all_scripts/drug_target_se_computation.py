@@ -86,10 +86,10 @@ def meddra_cleaning(dataset):
     dataset['se'] = dataset['se'].map(meddra_dic).fillna(
         dataset['se'])  # note that there possible be some ADR that are neither PT ot LLT
 
-    # Select only the row whose side effects corresppond to PT in MEDDRA
+    # Select only the row whose side effects correspond to PT in MEDDRA
     dataset = dataset[dataset['se'].isin(set(meddra_db['PT'].to_list()))]
 
-    # Exclude DRUG/ADRs pair if ADRs fall in this particular SOCs
+    # Exclude DRUG/ADRs pair if ADRs fall in this particular SOCs, HLGT and HLT
     Excluding_SOC_list = ['General disorders and administration site conditions',
                           'Injury, poisoning and procedural complications',
                           'Investigations',
@@ -99,8 +99,22 @@ def meddra_cleaning(dataset):
                           'Surgical and medical procedures',
                           'Infections and infestations']
 
-    list_adr_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].to_list()
+    HLGT_to_remove = ['Depressed mood disorders and disturbances',
+                      'Eating disorders and disturbances',
+                      'Impulse control disorders NEC',
+                      'Manic and bipolar mood disorders and disturbances',
+                      'Personality disorders and disturbances in behaviour',
+                      'Psychiatric disorders NEC',
+                      'Suicidal and self-injurious behaviours NEC']
 
+    HLT_to_remove = ['Paraphilias and paraphilic disorders',
+                     'Sexual and gender identity disorders NEC']
+
+    list_PT_SOC_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].to_list()
+    list_PT_HLGT_to_remove = meddra_db[meddra_db['HLGT'].isin(HLGT_to_remove)]['PT'].to_list()
+    list_PT_HLT_to_remove = meddra_db[meddra_db['HLT'].isin(HLT_to_remove)]['PT'].to_list()
+
+    list_adr_to_remove = list_PT_SOC_to_remove + list_PT_HLGT_to_remove + list_PT_HLT_to_remove
     # Exclude ADR being part of particular SOC
     dataset = dataset[~dataset.se.isin(set(list_adr_to_remove))]
 
