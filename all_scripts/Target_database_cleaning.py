@@ -7,6 +7,34 @@ IC50 value"""
 
 
 import pandas as pd
+import urllib.parse
+import urllib.request
+import io
+
+
+def human_check(uniprot_id_string):
+    url = 'https://www.uniprot.org/uploadlists/'
+
+    params = {
+        'from': 'ID',
+        'to': 'ID',
+        'format': 'tab',
+        'query': uniprot_id_string
+    }
+
+    data = urllib.parse.urlencode(params)
+    data = data.encode('utf-8')
+    req = urllib.request.Request(url, data)
+    with urllib.request.urlopen(req) as f:
+        response = f.read()
+
+    answer = response.decode('utf-8')
+
+    data = io.StringIO(answer)
+    dataf = pd.read_csv(data, sep="\t")
+
+    return dataf
+
 
 df = pd.read_csv('DRUG_TARGETS_COMMONS/DTC_data.csv',
                  usecols=['standard_inchi_key',
@@ -47,6 +75,17 @@ final = final[~(final['compound_name'] == 'None')]
 final = final.drop(columns=['len']).explode('target_id').reset_index()  # obtain drug-target pairwise
 # relationship
 final['Database'] = 'Drug_Target_Commons'
+
+# check the human proteins
+
+uniprot_ids_string = " ".join(final['target_id'].to_list())
+
+mapped_uniprots = human_check(uniprot_ids_string)
+
+final = final.merge(mapped_uniprots, left_on='target_id', right_on='From', how='inner')
+
+final = final[final['To'].str.contains('HUMAN')]
+
 final.to_csv('Drug_Target_Commons.input', sep='\t', index=False)
 
 
