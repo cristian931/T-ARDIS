@@ -289,7 +289,7 @@ def TARDIS_tables(interaction, accepted, database_type):
                     'drug',
                     'se'
                 ],
-                how='left'
+                how='inner'
             )
         drug_tg_se_stats.sort_values('drug').to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE_COMMUNITY', sep='\t', index=False)
 

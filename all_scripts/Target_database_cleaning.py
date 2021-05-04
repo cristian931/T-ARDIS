@@ -45,10 +45,18 @@ df = pd.read_csv('DRUG_TARGETS_COMMONS/DTC_data.csv',
                           'standard_value',
                           'standard_units']).dropna()
 
-dfIC50 = df[df['standard_type'] == 'IC50']
+type_list = ['IC50', 'EC50', 'POTENCY']
+
+dfIC50 = df[df['standard_type'].isin(type_list)]
+
+# remove entries that indicates values above a threshold
+dfIC50 = dfIC50[~dfIC50['standard_relation'].str.contains('>')]
+
 dfIC50_active = dfIC50[(dfIC50['standard_value'] <= 100)
                        &
-                       (dfIC50['standard_units'] == 'NM')]
+                       (dfIC50['standard_units'] == 'NM')
+                       &
+                       (dfIC50['standard_relation'].str.contains('=|<'))]  # remove other possible operands (like ~)
 
 dfIC50_active = dfIC50_active[['standard_inchi_key',
                                'compound_name',
@@ -76,6 +84,7 @@ final = final.drop(columns=['len']).explode('target_id').reset_index()  # obtain
 # relationship
 final['Database'] = 'Drug_Target_Commons'
 
+print(final)
 # check the human proteins
 
 uniprot_ids_string = " ".join(final['target_id'].to_list())
@@ -84,7 +93,7 @@ mapped_uniprots = human_check(uniprot_ids_string)
 
 final = final.merge(mapped_uniprots, left_on='target_id', right_on='From', how='inner')
 
-final = final[final['To'].str.contains('HUMAN')]
+final = final[final['To'].str.contains('HUMAN')].drop_duplicates()
 
 final.to_csv('Drug_Target_Commons.input', sep='\t', index=False)
 
