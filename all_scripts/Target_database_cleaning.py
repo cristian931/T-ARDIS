@@ -84,7 +84,7 @@ final = final.drop(columns=['len']).explode('target_id').reset_index()  # obtain
 # relationship
 final['Database'] = 'Drug_Target_Commons'
 
-print(final)
+# print(final)
 # check the human proteins
 
 uniprot_ids_string = " ".join(final['target_id'].to_list())
