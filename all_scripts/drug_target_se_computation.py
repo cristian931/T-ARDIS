@@ -6,6 +6,7 @@ databases. The aim is to retrieve the pairwise relationship between side effects
 validate them through fisher exact test and q-value correction """
 
 import pandas as pd
+import glob
 import scipy.stats as stats
 from multipy.fdr import qvalue
 from pandarallel import pandarallel
@@ -77,17 +78,44 @@ sider = sider.rename(columns={'DRUGNAME': 'drug',
 
 def meddra_cleaning(dataset):
     # LOAD MEDDRA  DB TO COVERT POSSIBLE LLT TO PT
-    meddra_db = pd.read_csv('MeDDRA_complete_LLT', sep=';').drop(columns="Primary SOC").drop_duplicates()
+    meddra_file = glob.glob("**/*/mdhier.asc")
+    llt_file = glob.glob("**/*/llt.asc")
+
+    meddra_header = ['pt_code',
+                     'hlt_code',
+                     'hlgt_code',
+                     'soc_code',
+                     'pt_name',
+                     'hlt_name',
+                     'hlgt_name',
+                     'soc_name',
+                     'soc_abbrev',
+                     'null_field',
+                     'pt_soc_code',
+                     'primary_soc_fg',
+                     'tmp']
+
+    llt = pd.read_csv(llt_file[0], sep='$',
+                      names=['llt_code', 'llt_name', 'pt_code', 'llt_whoart_code ', 'llt_harts_code ',
+                             'llt_costart_sym ', 'llt_icd9_code ', 'llt_icd9cm_code ', 'llt_icd10_code ',
+                             'llt_currency', 'llt_jart_code', 'tmp'],
+                      usecols=['llt_code', 'llt_name', 'pt_code'])
+
+    meddra_db = pd.read_csv(meddra_file[0], sep='$', names=meddra_header)
+
+    meddra_db = meddra_db[meddra_db['primary_soc_fg'] == 'Y']
+
+    meddra_db_with_LLT = pd.merge(meddra_db, llt, on='pt_code', how='inner')
 
     # Create a dictionary with LLT as keys and PT as values
-    meddra_dic = dict(zip(meddra_db['English'], meddra_db['PT']))
+    meddra_dic = dict(zip(meddra_db_with_LLT['llt_name'], meddra_db_with_LLT['pt_name']))
 
     # Map possible LLT in DRUG/ADRs dataframe to PT
     dataset['se'] = dataset['se'].map(meddra_dic).fillna(
         dataset['se'])  # note that there possible be some ADR that are neither PT ot LLT
 
     # Select only the row whose side effects correspond to PT in MEDDRA
-    dataset = dataset[dataset['se'].isin(set(meddra_db['PT'].to_list()))]
+    dataset = dataset[dataset['se'].isin(set(meddra_db_with_LLT['pt_name'].to_list()))]
 
     # Exclude DRUG/ADRs pair if ADRs fall in this particular SOCs, HLGT and HLT
     Excluding_SOC_list = ['General disorders and administration site conditions',
@@ -97,26 +125,12 @@ def meddra_cleaning(dataset):
                           'Product issues',
                           'Social circumstances',
                           'Surgical and medical procedures',
-                          'Infections and infestations']
+                          'Infections and infestations',
+                          'Psychiatric disorders']
 
-    HLGT_to_remove = ['Depressed mood disorders and disturbances',
-                      'Eating disorders and disturbances',
-                      'Impulse control disorders NEC',
-                      'Manic and bipolar mood disorders and disturbances',
-                      'Personality disorders and disturbances in behaviour',
-                      'Psychiatric disorders NEC',
-                      'Suicidal and self-injurious behaviours NEC']
-
-    HLT_to_remove = ['Paraphilias and paraphilic disorders',
-                     'Sexual and gender identity disorders NEC']
-
-    list_PT_SOC_to_remove = meddra_db[meddra_db['SOC'].isin(Excluding_SOC_list)]['PT'].to_list()
-    list_PT_HLGT_to_remove = meddra_db[meddra_db['HLGT'].isin(HLGT_to_remove)]['PT'].to_list()
-    list_PT_HLT_to_remove = meddra_db[meddra_db['HLT'].isin(HLT_to_remove)]['PT'].to_list()
-
-    list_adr_to_remove = list_PT_SOC_to_remove + list_PT_HLGT_to_remove + list_PT_HLT_to_remove
+    list_PT_SOC_to_remove = meddra_db[meddra_db['soc_name'].isin(Excluding_SOC_list)]['pt_name'].to_list()
     # Exclude ADR being part of particular SOC
-    dataset = dataset[~dataset.se.isin(set(list_adr_to_remove))]
+    dataset = dataset[~dataset.se.isin(set(list_PT_SOC_to_remove))]
 
     dataset = dataset.groupby('drug').agg(lambda x: list(set(x.tolist()))).reset_index()
 
@@ -133,7 +147,7 @@ def overlap(x):
         Dataframe containing the drug list related to the side effect and the drug list related to the target
     """
 
-    return len(list(set(x['se_drug']) & set(x['tg_drug'])))
+    return len(x['se_drug'].intersection(x['tg_drug']))
 
 
 def target_se_merging(drug_adr_database, drug_target_database):
@@ -146,15 +160,13 @@ def target_se_merging(drug_adr_database, drug_target_database):
     # between the mapped drugs and sideffect and grouping by the latter. In this way we can compute the number of drugs
     # simply applying the len function.
 
-    dr_se_pairwise = interaction[['drug', 'se']].explode('se').groupby('se') \
-        .agg(lambda x: list(set(x.tolist()))).reset_index()
+    dr_se_pairwise = interaction[['drug', 'se']].explode('se').groupby('se').agg(set).reset_index()
 
     dr_se_pairwise['se_drug_len'] = dr_se_pairwise['drug'].apply(lambda x: len(x))
 
     # Same thing can be done for defining the number of drugs that present a particular target.
 
-    dr_tg_pairwise = interaction[['drug', 'target']].explode('target').groupby('target') \
-        .agg(lambda x: list(set(x.tolist()))).reset_index()
+    dr_tg_pairwise = interaction[['drug', 'target']].explode('target').groupby('target').agg(set).reset_index()
 
     dr_tg_pairwise['tg_drug_len'] = dr_tg_pairwise['drug'].apply(lambda x: len(x))
 
@@ -184,8 +196,6 @@ def target_se_merging(drug_adr_database, drug_target_database):
     values = se_tg_pairwise_part_3[['se_drug_len', 'tg_drug_len']]
 
     values['overlap_len'] = lists.parallel_apply(overlap, axis=1)
-
-    # Now define a function for the p-value computation using the fisher exact test.
 
     interaction_len = len(interaction)  # extract the total number of drugs (len of the interaction dataframe)
 
@@ -303,7 +313,9 @@ def TARDIS_tables(interaction, accepted, database_type):
                 ],
                 how='left'
             )
-        drug_tg_se_stats.sort_values('drug').to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE_CONTROLLED', sep='\t', index=False)
+        drug_tg_se_stats.sort_values('drug')\
+            .dropna(subset=['Database_OFFSIDE', 'Database_SIDER'], how='all')\
+            .to_csv('TARDIS_TG_SE_DRUG_STATS_TABLE_CONTROLLED', sep='\t', index=False)
 
 
 ########################################################################################################################

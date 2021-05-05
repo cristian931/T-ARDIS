@@ -15,7 +15,14 @@ In order to make it works a couple of pre-processing steps are necessary.
     vocabularies".
   - Save and extract the files in a folder called "athena" in the same parent folder in which are saved all the other 
     repository files.
-3) Launch the run_file.sh script
+    
+3) Download the latest MEDDRA release on https://www.meddra.org/software-packages (you need to login with the Meddra 
+   credential and request unzip code from https://apps.meddra.org/selfservice/get_unzip_password2.aspx to extract the
+   files).
+   This is needed for a supplementary cleaning procedure. 
+   Extract the zip file in the same working directory.
+   
+4) Launch the run_file.sh script
   - The script will start downloading the updated files of the different DRUG - SIDE EFFECT databases:
   
       - FAERS (https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-latest-quarterly-data-files)
