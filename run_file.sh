@@ -37,7 +37,15 @@ conda update anaconda
 
 conda create --name conda_env python=3.7
 
-conda install -n conda_env requirements.txt
+echo Installing packages
+conda install -q -y -n conda_env requirements.txt
+conda install -q -y -n conda_env -c rdkit rdkit
+conda install -q -y -n conda_env -c bjrn pandarallel
+
+conda activate conda_env
+
+git clone https://github.com/puolival/multipy.git
+ipython multipy/setup.py install
 
 
 #create a database called DRUG_ADR_polishing_procedure
