@@ -58,10 +58,8 @@ body parts or underlying human biology, as pointed on the definitions of MedDRAâ
   - Product issues
   - Social circumstances
   - Surgical and medical procedures
-  
-The Side effect contained in these classes are stored in the file ADR_to_remove.txt together with the SOC of 
-membership and the respective MedDRA ID 
-
+  - Infections and infestations
+  - Psychiatric disorders
 
 # Output
 Different files of output are obtained from the procedure:
