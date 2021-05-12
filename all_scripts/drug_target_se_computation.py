@@ -7,8 +7,12 @@ validate them through fisher exact test and q-value correction """
 
 import pandas as pd
 import glob
+import sys
 import scipy.stats as stats
 from multipy.fdr import qvalue
+from rdkit import Chem
+from rdkit import DataStructs
+from rdkit.Chem.Fingerprints import FingerprintMols
 from pandarallel import pandarallel
 
 pandarallel.initialize(progress_bar=True)
@@ -132,7 +136,7 @@ def meddra_cleaning(dataset):
     # Exclude ADR being part of particular SOC
     dataset = dataset[~dataset.se.isin(set(list_PT_SOC_to_remove))]
 
-    dataset = dataset.groupby('drug').agg(lambda x: list(set(x.tolist()))).reset_index()
+    dataset = dataset.groupby('drug').agg(set).reset_index()
 
     return dataset
 
@@ -156,9 +160,49 @@ def target_se_merging(drug_adr_database, drug_target_database):
                            how='inner',
                            on='drug')
 
+    # Compute the TANIMOTO Score on mapped drugs to remove the one to similar
+    daf_smiles = interaction[['SMILES_string']].drop_duplicates().dropna()
+    df_smiles = daf_smiles['SMILES_string']
+
+    c_smiles = []
+    for ds in df_smiles:
+        try:
+            Chem.CanonSmiles(ds)
+            c_smiles.append(ds)
+        except:
+            continue
+
+    ms = [Chem.MolFromSmiles(x) for x in c_smiles]
+
+    fps = [FingerprintMols.FingerprintMol(x) for x in ms]
+
+    qu, ta, sim = [], [], []
+
+    for n in range(len(fps) - 1):  # -1 so the last fp will not be used
+        s = DataStructs.BulkTanimotoSimilarity(fps[n], fps[n + 1:])  # +1 compare with the next to the last fp
+        # collect the SMILES and values
+        for m in range(len(s)):
+            qu.append(c_smiles[n])
+            ta.append(c_smiles[n + 1:][m])
+            sim.append(s[m])
+
+    # build the dataframe
+    d = {'query': qu, 'target': ta, 'Similarity': sim}
+    tanimoto_scores = pd.DataFrame(data=d)
+
+    tanimoto_to_remove = tanimoto_scores[tanimoto_scores['Similarity'] >= 0.7]
+
+    tanimoto_smiles = list(set(tanimoto_to_remove['query'].to_list()))
+
+    interaction = interaction[~interaction['SMILES_string'].isin(tanimoto_smiles)]
+
+    return interaction
+    
+
+def pairwiser(interaction):
     # Extrapolate the number of drugs that present a particular side effect reconstructing the pairwise relationship
-    # between the mapped drugs and sideffect and grouping by the latter. In this way we can compute the number of drugs
-    # simply applying the len function.
+    # between the mapped drugs and side effects and grouping by the latter.
+    # In this way we can compute the number of drugs simply applying the len function.
 
     dr_se_pairwise = interaction[['drug', 'se']].explode('se').groupby('se').agg(set).reset_index()
 
@@ -191,17 +235,9 @@ def target_se_merging(drug_adr_database, drug_target_database):
                                      on='target'
                                      )
 
-    lists = se_tg_pairwise_part_3[['se_drug', 'tg_drug']]  # split the dataframe to reduce memory consumption
+    se_tg_pairwise_part_3['overlap_len'] = se_tg_pairwise_part_3.parallel_apply(overlap, axis=1)
 
-    values = se_tg_pairwise_part_3[['se_drug_len', 'tg_drug_len']]
-
-    values['overlap_len'] = lists.parallel_apply(overlap, axis=1)
-
-    interaction_len = len(interaction)  # extract the total number of drugs (len of the interaction dataframe)
-
-    lighter = se_tg_pairwise_part_3[['se', 'target']]
-
-    return interaction, interaction_len, values, lighter
+    return se_tg_pairwise_part_3
 
 
 def fisher(x, interaction_len):
@@ -236,24 +272,21 @@ def fisher(x, interaction_len):
     return pvalue
 
 
-def final_adjustements(drug_adr_database, drug_target_database, database_type):
+def final_adjustements(interaction, database_type):
+    
+    values_df = pairwiser(interaction)
 
-    interaction, interaction_len, values, lighter = target_se_merging(drug_adr_database, drug_target_database)
+    values_df['pvalue'] = values_df.parallel_apply(fisher, interaction_len=len(interaction), axis=1)
 
-    lighter['pvalue'] = values.parallel_apply(fisher, interaction_len=interaction_len, axis=1)
-
-    lighter.to_csv('p_value_computed_' + database_type + '.csv',
-                   sep='\t',
-                   index=False
-                   )
+    values_df[['se', 'target', 'pvalue']].to_csv('p_value_computed_' + database_type + '.csv', sep='\t', index=False)
 
     # obtain the q value correction on the p-value computed
 
-    _, qvals = qvalue(lighter['pvalue'].tolist())
+    _, qvals = qvalue(values_df['pvalue'].tolist())
 
-    lighter['qvals'] = qvals
+    values_df['qvals'] = qvals
 
-    Final = lighter.drop_duplicates()
+    Final = values_df[['se', 'target', 'pvalue', 'qvals']].drop_duplicates()
 
     Final.to_csv('qvalues_interactions_' + database_type,
                  sep='\t',
@@ -266,11 +299,12 @@ def final_adjustements(drug_adr_database, drug_target_database, database_type):
                     index=False
                     )
 
-    return interaction, accepted
+    return accepted
 
 
 def TARDIS_tables(interaction, accepted, database_type):
-    exploded_interaction = interaction.explode('se').explode('target')
+    exploded_interaction = interaction.explode('se').explode('target').drop(columns=['SMILES_string']).drop_duplicates()
+    #print(exploded_interaction)
 
     drug_tg_se_stats = pd.merge(accepted,
                                 exploded_interaction,
@@ -280,8 +314,13 @@ def TARDIS_tables(interaction, accepted, database_type):
                                 ],
                                 how='inner'
                                 )
+    
+    print(drug_tg_se_stats)
 
-    for tg_dataframe in [drugtargetcommons]:
+    for tg_dataframe in [
+        dtc[['drug', 'target', 'Database_DTC']].drop_duplicates(),
+        stitch[['drug', 'target', 'Database_STITCH']].drop_duplicates()
+    ]:
         drug_tg_se_stats = drug_tg_se_stats.merge(
             tg_dataframe.drop_duplicates(),
             on=[
@@ -290,7 +329,7 @@ def TARDIS_tables(interaction, accepted, database_type):
             ],
             how='left'
         )
-
+    
     if database_type == 'community':
         for se_dataframe in [faers, medeffect]:
             drug_tg_se_stats = drug_tg_se_stats.merge(
@@ -322,38 +361,54 @@ def TARDIS_tables(interaction, accepted, database_type):
 # Create two distinct datasets, one containing the information derived from community uploaded data (MEDEFFECT, FAERS)
 # less controlled, the other from more reliable databases (SIDER, OFFSIDE)
 
+
 faers_grouped = faers.groupby('drug').agg(set).reset_index()
 medeffect_grouped = medeffect.groupby('drug').agg(set).reset_index()
 
 df_se_community = pd.merge(faers_grouped, medeffect_grouped, on='drug', how='inner')
 df_se_community['union_se'] = df_se_community.apply(lambda row: row['se_x'].union(row['se_y']), axis=1)
-df_se_community = df_se_community[['drug', 'union_se']].explode('union_se')
+df_se_community = df_se_community[['drug', 'union_se']].explode('union_se', ignore_index=True)
 df_se_community = df_se_community.rename(columns={'union_se': 'se'})
 
 df_se_controlled = offside.append(sider, ignore_index=True)[['drug', 'se']]
 
 # Now we load the datasets regarding drug target relationships
-drugtargetcommons = pd.read_csv('relationship_analysis_input_files/Drug_Target_Commons.input',
-                                sep='\t',
-                                usecols=['compound_name',
-                                         'target_id',
-                                         'Database'
-                                         ]
-                                )
+stitch = pd.read_csv('relationship_analysis_input_files/STITCH_cleaned.input',
+                     sep='\t')
 
-drugtargetcommons = drugtargetcommons.rename(columns={'compound_name': 'drug',
-                                                      'target_id': 'target',
-                                                      'Database': 'Database_DTC'
-                                                      }
-                                             )
-df_target = drugtargetcommons[['drug', 'target']] \
+dtc = pd.read_csv('relationship_analysis_input_files/DTC_cleaned.input', sep='\t')
+
+
+stitch = stitch.rename(columns={'compound_name': 'drug',
+                                'target_id': 'target',
+                                      }
+                             )
+dtc = dtc.rename(columns={'compound_name': 'drug',
+                          'target_id': 'target',
+                                      }
+                             )
+
+df_target = stitch.append(dtc, ignore_index=True)\
+    .groupby(['standard_inchi_key', 'drug'], dropna=False)\
+    .agg(set).reset_index()
+
+
+df_target = df_target[['drug', 'target', 'Database_STITCH', 'Database_DTC', 'SMILES_string']].explode('target').explode('SMILES_string')
+
+
+df_target = df_target[['drug', 'target', 'SMILES_string']] \
     .groupby('drug') \
-    .agg(lambda x: list(set(x.tolist()))) \
-    .reset_index()
+    .agg(set) \
+    .reset_index().explode('SMILES_string')
+
 
 df_se_community = meddra_cleaning(df_se_community)
 df_se_controlled = meddra_cleaning(df_se_controlled)
-interaction_community, accepted_community = final_adjustements(df_se_community, df_target, 'community')
-interaction_controlled, accepted_controlled = final_adjustements(df_se_controlled, df_target, 'controlled')
+
+interaction_community = target_se_merging(df_se_community, df_target)
+interaction_controlled = target_se_merging(df_se_controlled, df_target)
+accepted_community = final_adjustements(interaction_community, 'community')
+accepted_controlled = final_adjustements(interaction_controlled, 'controlled')
+
 TARDIS_tables(interaction_community, accepted_community, 'community')
 TARDIS_tables(interaction_controlled, accepted_controlled, 'controlled')

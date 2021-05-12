@@ -32,14 +32,13 @@
 echo
 echo setting up Python Virtual Enviroment and installing required packages
 
-foldvar=python_env
-mkdir $foldvar
+conda update conda --all
+conda update anaconda
 
-python3.7 -m venv ./python_env --clear
+conda create --name conda_env python=3.7
 
-source python_env/bin/activate
+conda install -n conda_env requirements.txt
 
-python3.7 -m pip install -r requirements.txt > /dev/null 2>&1
 
 #create a database called DRUG_ADR_polishing_procedure
 
@@ -474,7 +473,7 @@ echo
 
 #Download DRUG_TARGETS_COMMONS
 echo
-echo Downloading Drug DRUG_TARGETS_COMMONS
+echo Downloading DRUG_TARGETS_COMMONS
 echo
 
 foldvar=DRUG_TARGETS_COMMONS
@@ -483,12 +482,28 @@ cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
 wget --no-check-certificate https://drugtargetcommons.fimm.fi/static/Excell_files/DTC_data.csv > /dev/null 2>&1
 cd ..
 
+echo
+echo Downloading STITCH
+echo
+
+foldvar=STITCH
+mkdir $foldvar
+cd $foldvar || { echo "Error ${foldvar} not found"; exit 1; }
+wget http://stitch.embl.de/download/protein_chemical.links.v5.0/9606.protein_chemical.links.v5.0.tsv.gz
+wget http://stitch.embl.de/download/chemicals.v5.0.tsv.gz
+wget http://stitch.embl.de/download/chemicals.inchikeys.v5.0.tsv.gz
+
+gunzip *tsv.gz
+
+cd ..
+
 
 # cleaning targets
 echo
 echo Cleaning Drug Targets Databases
 echo
-python3.7 all_scripts/Target_database_cleaning.py > /dev/null 2>&1
+python3.7 all_scripts/DTC_cleaning > /dev/null 2>&1
+python3.7 all_scripts/STITCH_cleaning > /dev/null 2>&1
 
 ##################################################################################
 

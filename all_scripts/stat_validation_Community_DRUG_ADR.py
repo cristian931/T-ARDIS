@@ -32,30 +32,6 @@ def parallel_log_likelihood_ratio(entries_df, cross_table):
 
     return logLR
 
-# def log_likelihood_ratio(cross_table):
-#     result_list = []
-#     for adverse_event in list(cross_table.index):
-#         for drugname in list(cross_table.columns):
-#             report_value = cross_table.loc[adverse_event][drugname]
-#             if report_value == 0:
-#                 logLR = np.nan
-#             else:
-#                 total_drug_reports = cross_table[drugname]['Total_Reports']
-#                 total_adverse_event_reports = cross_table.loc[adverse_event]['Total_Reports']
-#                 all_events_reports = cross_table['Total_Reports']['Total_Reports']
-#
-#                 logLR = report_value\
-#                         * (np.log10(report_value) - np.log10(total_adverse_event_reports))\
-#                         + total_drug_reports\
-#                         * (np.log10(total_drug_reports) - np.log10(all_events_reports - total_adverse_event_reports))\
-#                         - (report_value + total_drug_reports)\
-#                         * (np.log10(report_value + total_drug_reports) - np.log10(all_events_reports))
-#
-#             result_list.append((drugname, adverse_event, logLR))
-#     LLR_dataframe = pd.DataFrame(result_list, columns=['DRUGNAME', 'ADVERSE EVENT', 'LLR'])
-#
-#     return LLR_dataframe
-
 
 def multinomial_distribution_and_MonteCarlo_sampling(cross_table):
 
@@ -116,5 +92,5 @@ if __name__ == '__main__':
     positives = compare_dist_to_LLR[compare_dist_to_LLR['significant'] == 'yes']
     positives['Database'] = database
     filtered_positives = positives[['drugname', 'adverse_event', 'logLR', '5th_perc', 'Database']]
-    filtered_positives.to_csv('Significant_interaction_' + database + '.input', sep='\t')
+    filtered_positives.to_csv('Significant_interaction_' + database + '.input', sep='\t', index=False)
 

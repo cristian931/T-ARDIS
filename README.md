@@ -5,7 +5,11 @@ between Drug side effects and Drug Targets
 In order to make it works a couple of pre-processing steps are necessary.
 1) Set up a postgresql database where to run the FAERS cleaning procedure. It's necessary just create the server, all 
    other procedure, like the database creation are done automatically in the bash script
-2) Download an updated version of ATHENA vocabularies. These vocabularies are used to map and retrieve unique DRUG 
+   
+2) This procedure has been run using the Anaconda packages, So it's suggested to download the latest Anaconda repository
+   or set up a python environment with the packages in the requirements file
+   
+3) Download an updated version of ATHENA vocabularies. These vocabularies are used to map and retrieve unique DRUG 
    names in the FAERS procedure. The total number of used vocabularies are 23, included the SNOWMED and MEDDRA 
    dictionaries.
   - To download that you need to be registered in the ATHENA website http://athena.ohdsi.org and have a license for the 
@@ -16,13 +20,13 @@ In order to make it works a couple of pre-processing steps are necessary.
   - Save and extract the files in a folder called "athena" in the same parent folder in which are saved all the other 
     repository files.
     
-3) Download the latest MEDDRA release on https://www.meddra.org/software-packages (you need to login with the Meddra 
+4) Download the latest MEDDRA release on https://www.meddra.org/software-packages (you need to login with the Meddra 
    credential and request unzip code from https://apps.meddra.org/selfservice/get_unzip_password2.aspx to extract the
    files).
    This is needed for a supplementary cleaning procedure. 
    Extract the zip file in the same working directory.
    
-4) Launch the run_file.sh script
+5) Launch the run_file.sh script
   - The script will start downloading the updated files of the different DRUG - SIDE EFFECT databases:
   
       - FAERS (https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-latest-quarterly-data-files)
@@ -37,7 +41,7 @@ In order to make it works a couple of pre-processing steps are necessary.
   
       - DRUG TARGET COMMONS (https://drugtargetcommons.fimm.fi/)
 
-4) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise 
+6) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise 
    relationships between the Drug's targets and side effects exploiting the drug name as bridge.
 In order to confirm the relationship the results have been statistically validated using the Fisher exact test as 
    explained in the paper of Kuhn et al. (http://europepmc.org/article/MED/23632385)
