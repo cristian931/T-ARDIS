@@ -6,7 +6,7 @@
 #
 # This Script is used to Automatize the FAERS cleaning procedure (That rely on a Postgresql and different vocabularies), 
 # the download and cleaning procedure of three different drug-se databases (MEDEFFECT
-# OFFSIDE and SIDER (using a python script), and a compendium of different DRUG-TARGET databases calle DRUG-TARGETS COMMON,
+# OFFSIDE and SIDER (using a python script), and a compendium of different DRUG-TARGET databases called DRUG-TARGETS COMMON and STITCH
 # cleaned with a python script too.
 # The script manages the downloading and unpacking of file, the folder creation and file / database management.
 #
