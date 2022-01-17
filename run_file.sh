@@ -14,7 +14,7 @@
 # The entire procedure will require at least two days and AT LEAST 45 GB OF FREE MEMORY, 
 # since the files are huge and unfortunately need to be processed at the same time
 #
-# USAGE bash download_data.sh
+# USAGE bash run_file.sh
 #
 #####################################################
 
