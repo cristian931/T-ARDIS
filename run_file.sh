@@ -38,11 +38,12 @@ conda update anaconda
 conda create --name conda_env python=3.7
 
 echo Installing packages
-conda install -q -y -n conda_env requirements.txt
-conda install -q -y -n conda_env -c rdkit rdkit
-conda install -q -y -n conda_env -c bjrn pandarallel
-
 conda activate conda_env
+conda install --file requirements.txt
+conda install -c rdkit rdkit
+conda install -c bjrn pandarallel
+
+
 
 git clone https://github.com/puolival/multipy.git
 ipython multipy/setup.py install
