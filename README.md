@@ -1,6 +1,11 @@
-# Target - Adverse Reaction Database Integrated Search
+# Target - Adverse Reaction Database Integrated Search (T-ARDIS)
+Cristiano Galletti, Patricia Mirela Bota, Baldo Oliva, Narcis Fernandez-Fuentes, Mining drug–target and drug–adverse drug reaction databases to identify target–adverse drug reaction relationships, Database, Volume 2021, 2021, baab068, https://doi.org/10.1093/database/baab068
+
+
 This repository contains all the file necessary to download, compute and statistically validate the pairwise interaction 
-between Drug side effects and Drug Targets
+between Drug side effects and Drug Targets.
+
+__T-ARDIS is now avaiable as webservice at http://www.bioinsilico.org/T-ARDIS/__
 
 In order to make it works a couple of pre-processing steps are necessary.
 1) Set up a postgresql database where to run the FAERS cleaning procedure. It's necessary just create the server, all 
