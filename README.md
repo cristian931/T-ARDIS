@@ -45,6 +45,7 @@ In order to make it works a couple of pre-processing steps are necessary.
   - And the updated versions of the DRUG - TARGET database:
   
       - DRUG TARGET COMMONS (https://drugtargetcommons.fimm.fi/)
+      - STITCH 5.0 (http://stitch.embl.de/)
 
 6) The procedure will standardize, clean and relate the information in the databases to obtain a list of pairwise 
    relationships between the Drug's targets and side effects exploiting the drug name as bridge.
